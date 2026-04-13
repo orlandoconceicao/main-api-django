@@ -10,6 +10,8 @@ from datetime import timedelta
 from .models import Usuario, Curso, Compra, Avaliacao, CompraStatus
 from .serializers import UsuarioSerializer, CursoSerializer, AvaliacaoSerializer, CompraSerializer
 from .filters import CursoFilter, AvaliacaoFilter, CompraFilter
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 # RESPONSE PADRÃO
 def response(success=True, data=None, error=None, status_code=status.HTTP_200_OK):
@@ -133,17 +135,56 @@ class AdminCursoViewSet(viewsets.ModelViewSet):
     queryset = Curso.objects.all()
     serializer_class = CursoSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
+    
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter
+    ]
+
+    ordering_fields = [
+        'preco',
+        'criacao',
+        'total_vendas',
+        'media_avaliacoes'
+    ]
+
+    ordering = ['-criacao']
 
 class AdminAvaliacaoViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Avaliacao.objects.all()
     serializer_class = AvaliacaoSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
 
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter
+    ]
+
+    ordering_fields = [
+        'nota',
+        'criacao'
+    ]
+
+    ordering = ['-criacao']
+    
 class AdminCompraViewSet(viewsets.ModelViewSet):
     queryset = Compra.objects.all()
     serializer_class = CompraSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
     filterset_class = CompraFilter
+
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter
+    ]
+
+    ordering_fields = [
+        'preco',
+        'criacao',
+        'status'
+    ]
+
+    ordering = ['-criacao']
 
     @action(detail=True, methods=['post'])
     def rejeitar_reembolso(self, request, pk=None):
@@ -158,10 +199,26 @@ class AdminCompraViewSet(viewsets.ModelViewSet):
 
 # CURSOS PÚBLICOS
 class CursoViewSet(viewsets.ReadOnlyModelViewSet):
+    
     queryset = Curso.objects.filter(ativo=True).annotate(media=Avg('avaliacoes__nota'))
     serializer_class = CursoSerializer
     permission_classes = [permissions.AllowAny]
     filterset_class = CursoFilter
+
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter
+    ]
+
+    ordering_fields = [
+        'preco',
+        'criacao',
+        'total_vendas',
+        'media',  # campo do annotate
+        'nome'
+    ]
+
+    ordering = ['-criacao']
 
 # AVALIAÇÕES PÚBLICAS
 class AvaliacaoViewSet(viewsets.ReadOnlyModelViewSet):
@@ -169,3 +226,15 @@ class AvaliacaoViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AvaliacaoSerializer
     permission_classes = [permissions.AllowAny]
     filterset_class = AvaliacaoFilter
+
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter
+    ]
+
+    ordering_fields = [
+        'nota',
+        'criacao'
+    ]
+
+    ordering = ['-criacao']

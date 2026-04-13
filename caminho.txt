@@ -1,0 +1,596 @@
+-- Active: 1775603291622@@127.0.0.1@5432@postgres
+
+===========================================
+PASSO A PASSO DETALHADO – API PROFISSIONAL
+===========================================
+(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)(✓)
+
+===== 01. Preparar o Ambiente ===== (✓)
+Objetivo: Garantir que o projeto rode isolado, seguro e com dependências controladas.
+
+Verificar Python:
+   python --version
+   # Deve retornar >= 3.10 para compatibilidade com Django/DRF.
+
+Criar e ativar Virtual Environment:
+
+   # Linux/macOS
+   python -m venv venv
+   source venv/bin/activate
+
+   # Windows
+   python -m venv venv
+   .\venv\Scripts\activate
+
+Instalar pacotes essenciais:
+   pip install django djangorestframework psycopg2-binary djangorestframework-simplejwt drf-yasg
+
+Instalar ferramentas opcionais para teste e documentação:
+   pip install pytest pytest-django drf-yasg
+
+--------------------------------------------------
+
+===== 02. Criar Projeto e App ===== (✓)
+
+Criar projeto Django:
+   django-admin startproject software_sales
+   cd software_sales
+
+Criar app principal:
+   python manage.py startapp courses
+
+Adicionar apps no settings.py:
+   INSTALLED_APPS = [
+       'rest_framework',
+       'rest_framework_simplejwt',
+       'drf_yasg',
+       'courses',
+   ]
+
+--------------------------------------------------
+
+===== 03. Configurar Banco de Dados PostgreSQL ===== (✓)
+
+Criar banco e usuário:
+   CREATE DATABASE software_sales_db;
+   CREATE USER api_user WITH PASSWORD 'senha123';
+   GRANT ALL PRIVILEGES ON DATABASE software_sales_db TO api_user;
+
+Configurar no settings.py:
+   DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.postgresql',
+           'NAME': 'software_sales_db',
+           'USER': 'api_user',
+           'PASSWORD': 'senha123',
+           'HOST': 'localhost',
+           'PORT': 5432,
+       }
+   }
+
+Testar conexão:
+    python manage.py migrate
+
+--------------------------------------------------
+
+===== 04. Estrutura de Arquivos ===== (✓)
+
+software_sales/
+│
+├── manage.py
+├── venv/
+├── software_sales/
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+├── courses/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   ├── permissions.py
+│   ├── urls.py
+│   ├── tests.py
+│   └── signals.py
+└── requirements.txt
+
+--------------------------------------------------
+
+===== 05. Configuração de settings.py ===== (✓)
+
+Configurações DRF:
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
+
+Configuração JWT:
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+
+Configuração SECRET_KEY:
+# Criar variável em .env e referenciar no settings.py
+
+--------------------------------------------------
+
+===== 06. Models (models.py) ===== (✓)
+
+Usuário:
+- Campos: username, email, password, is_admin
+- Métodos: __str__ para exibição amigável
+- Segurança: password criptografada com set_password()
+
+Curso:
+- Campos: nome, descricao, preco, criado_em, criado_por
+- Valida preco >=0
+- __str__ exibe nome do curso
+
+Avaliação:
+- Campos: usuario (FK), curso (FK), nota (1-5), comentario
+- Valida nota entre 1 e 5
+- __str__ exibe resumo do comentário
+
+Compra:
+- Campos: usuario (FK), curso (FK), data, preco, status (pending/completed/refunded)
+- Valida status válido
+- __str__ mostra usuario + curso
+
+Extras:
+- Uso de F()
+- Constraints
+- Indexes
+
+--------------------------------------------------
+
+===== 07. Serializers (serializers.py) ===== (✓)
+
+- Serializers criados
+- Validações aplicadas
+- Segurança com read_only_fields
+- Regras de negócio implementadas
+
+--------------------------------------------------
+
+===== 08. Views (views.py) ===== (✓)
+
+ViewSets organizados
+Actions personalizadas
+
+Fluxo completo:
+- Cadastro
+- Login JWT
+- Listar cursos
+- Comprar
+- Avaliar
+- Reembolso
+
+--------------------------------------------------
+
+===== 09. Permissões customizadas ===== (✓)
+
+- IsAdmin
+- IsOwner
+- HasPurchasedCourse
+
+--------------------------------------------------
+
+===== 10. URLs ===== (✓)
+
+/api/usuarios/login/
+
+Rotas globais:
+- /api/cursos/
+- /api/avaliacoes/
+- /api/usuarios/
+- /api/usuarios/login/
+- /api/usuarios/cursos/
+- /api/usuarios/comprar/
+- /api/usuarios/avaliar/
+- /api/usuarios/reembolso/
+
+Rotas admin:
+- /api/admin/cursos/
+- /api/admin/avaliacoes/
+- /api/admin/compras/
+- /api/admin/compras/{id}/rejeitar_reembolso/
+
+--------------------------------------------------
+/api/cursos/
+
+===== 11. Admin Django (admin.py) ===== (✓)
+
+Registrar models no admin:
+- admin.site.register(Curso)
+- admin.site.register(Avaliacao)
+- admin.site.register(Compra)
+- admin.site.register(Usuario)
+
+--------------------------------------------------
+
+===== 12. Signals (signals.py) ===== (✓)
+
+Eventos automáticos:
+- Após compra concluída → enviar email
+- Após avaliação → atualizar média do curso
+- Separar regras do model para signals
+
+--------------------------------------------------
+
+===== 13. Testes (tests.py) ===== (x)
+
+Testar endpoints com pytest-django ou APITestCase:
+- Cadastro/login JWT
+- CRUD cursos
+- Comprar curso
+- Avaliar curso
+- Solicitar reembolso
+
+Validar:
+- Permissões (usuário/admin/superadmin)
+- Status code HTTP
+- Resposta JSON correta
+
+--------------------------------------------------
+
+===== 14. Migrações ===== (✓)
+
+Criar e aplicar:
+- python manage.py makemigrations
+- python manage.py migrate
+- python manage.py runserver
+
+- npx create-react-app frontend
+- cd frontend
+- npm install
+- npm start
+- http://localhost:3000
+
+Opcional:
+- Criar script SQL para popular tabelas
+
+--------------------------------------------------
+
+super user 
+email = orlandoconceicao94@gmail.com
+username = orlando
+senha = 577643121Aa.
+
+--------------------------------------------------
+
+===== 15. Funcionalidades Extras ===== (x)
+
+===== Filtros: ===== (✓)
+- criei arquivo
+- Permitir busca por campos via query params (?status=completed, ?curso=1)
+- Usar django-filter integrado ao DRF
+- Facilita consultas específicas e reduz carga de dados
+
+/api/cursos/
+/api/cursos/?nome=python
+/api/avaliacoes/?curso=1
+/api/admin/compras/?status=completed
+
+-----
+
+===== Paginação: ===== (✓)
+- criei arquivo
+- Configurar PageNumberPagination no DRF
+- Controlar tamanho da resposta (PAGE_SIZE)
+- Melhorar performance e experiência em listas grandes
+
+Paginação
+?page=1
+?page_size=20
+
+Filtros
+?nome=python
+?preco=50
+?preco__gte=10
+?preco__lte=100
+?criado_por=1
+
+Ordenação
+?ordering=preco
+?ordering=-preco
+?ordering=-preco,criacao
+
+Busca
+?search=python
+
+Combinação
+/api/cursos/?page=1&page_size=10&search=react&ordering=-criacao&preco__gte=50
+
+Limit Offset
+?limit=10&offset=20
+
+Cursor
+?cursor=abc123
+
+Regras
+?page=1&cursor=abc
+?page_size=100000
+
+-----
+
+===== Ordenação: ===== (x)
+- Permitir ordenação dinâmica (?ordering=preco, -data)
+- Definir ordering_fields nas views
+- Útil para relatórios e análises
+
+/api/cursos/?ordering=preco
+/api/cursos/?ordering=-preco
+/api/cursos/?ordering=-total_vendas
+/api/cursos/?ordering=-media
+/api/cursos/?ordering=preco,-criacao
+-----
+
+===== Logs de auditoria: ===== (x)
+- Registrar ações críticas (create, update, delete)
+- Armazenar usuário, ação e timestamp
+- Pode ser feito via signals ou middleware
+
+-----
+
+===== Documentação Swagger/Redoc: ===== (x)
+- Gerar documentação automática com drf-yasg ou drf-spectacular
+- Disponibilizar endpoints interativos
+- Facilitar integração com frontend e terceiros
+
+-----
+
+===== Histórico completo: ===== (x)
+- Endpoint para listar compras do usuário
+- Endpoint para avaliações feitas
+- Endpoint para reembolsos solicitados/concluídos
+- Relacionamento via ForeignKey garantindo rastreabilidade
+
+-----
+
+===== Testes unitários: ===== (x)
+- Testar models, serializers e views
+- Garantir regras de negócio
+- Evitar regressões futuras
+
+-----
+
+===== Validações: ===== (x)
+- Implementar nos serializers (validate, validate_<campo>)
+- Garantir integridade dos dados
+- Exemplo: preço >= 0, nota entre 1 e 5
+
+-----
+
+===== Mensagens de erro claras: ===== (x)
+- Retornar JSON padronizado
+- Informar campo e motivo do erro
+- Exemplo: {"erro": "nota deve ser entre 1 e 5"}
+
+--------------------------------------------------
+
+===== 16. Nível Avançado (API FORTE) ===== (x)
+
+===== Docker: ===== (x)
+- Criar Dockerfile para API Django
+- Configurar docker-compose (Django + PostgreSQL + Redis)
+- Padronizar ambiente de desenvolvimento e produção
+
+-----
+
+===== Celery + Redis: ===== (x)
+- Configurar filas assíncronas
+- Envio de emails em background
+- Processamento de tarefas demoradas
+
+-----
+
+===== Deploy: ===== (x)
+- Subir aplicação em Railway, Render ou AWS
+- Configurar banco PostgreSQL online
+- Usar variáveis de ambiente (.env)
+
+-----
+
+===== Segurança: ===== (x)
+- Proteger SECRET_KEY
+- Configurar CORS
+- Implementar rate limiting (limite de requisições)
+- Evitar exposição de dados sensíveis
+
+-----
+
+===== README profissional: ===== (x)
+- Descrição do projeto
+- Tecnologias utilizadas
+- Passo a passo para rodar
+- Lista de endpoints principais
+- Exemplos de requisição/resposta
+
+--------------------------------------------------
+
+===== 17. O QUE AINDA FALTARIA (MESMO COM TUDO ISSO) =====
+
+===== Arquitetura limpa (Clean Architecture leve) ===== (x)
+Separar regra de negócio das views
+Criar services.py
+Criar selectors.py
+
+CRIAR:
+services.py
+selectors.py
+
+EXPLICAÇÃO:
+Hoje sua lógica ainda está na view → isso não escala
+
+-----
+
+===== Camada de domínio (organização real) ===== (x)
+Separar responsabilidades por camada
+
+View → entrada  
+Service → regra  
+Selector → consulta  
+
+EXPLICAÇÃO:
+Isso é padrão de empresa grande (evita bagunça no futuro)
+
+-----
+
+===== Performance avançada ===== (x)
+Usar select_related e prefetch_related em TODOS os endpoints
+Evitar N+1 queries
+Otimizar queries com annotate
+
+ONDE MEXER:
+views.py
+selectors.py
+
+-----
+
+===== Cache ===== (x)
+Cachear endpoints mais usados
+Usar Redis
+
+ONDE MEXER:
+views.py
+
+@method_decorator(cache_page(60 * 2), name='list')
+
+EXPLICAÇÃO:
+Reduz carga no banco
+
+-----
+
+===== Rate limit avançado ===== (x)
+Limitar requisições por usuário/IP
+
+ONDE MEXER:
+settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/min'
+    }
+}
+
+-----
+
+===== Permissões granulares ===== (x)
+Criar permissões específicas
+Ex: dono do recurso, admin, etc
+
+CRIAR:
+melhorar permissions.py
+
+-----
+
+===== Versionamento da API ===== (x)
+Criar versão da API (/api/v1/)
+
+ONDE MEXER:
+urls.py
+
+path('api/v1/', include(...))
+
+EXPLICAÇÃO:
+Evita quebrar frontend no futuro
+
+-----
+
+===== Monitoramento ===== (x)
+Logs estruturados
+Integração com ferramentas (Sentry)
+
+-----
+
+===== Padronização de código ===== (x)
+Usar lint (flake8 / black)
+Padronizar código
+
+-----
+
+===== CI/CD ===== (x)
+Pipeline automático
+Rodar testes antes de deploy
+
+-----
+
+===== README técnico nível empresa ===== (x)
+Arquitetura explicada
+Decisões técnicas
+Fluxo da API
+
+-----
+
+===== Segurança avançada ===== (x)
+Sanitização de inputs
+Headers de segurança
+Proteção contra brute force
+
+-----
+
+===== Banco de dados (nível avançado) ===== (x)
+Migrações organizadas
+Índices estratégicos
+Análise de performance  
+
+--------------------------------------------------
+
+========================
+RESUMO FINAL DO PROJETO
+========================
+
+STATUS GERAL:
+
+✔ Estrutura base completa
+✔ API funcional com autenticação JWT
+✔ Models, serializers, views e permissões implementados
+✔ Banco PostgreSQL configurado
+✔ Filtros e paginação funcionando
+
+PENDENTE (ALTA PRIORIDADE):
+
+✘ Testes (crítico)
+✘ Ordenação
+✘ Logs de auditoria
+✘ Documentação Swagger
+✘ Validações completas
+✘ Mensagens de erro padronizadas
+
+NÍVEL PROFISSIONAL (PRÓXIMO PASSO):
+
+✘ Clean Architecture (services + selectors)
+✘ Performance (select_related / prefetch_related)
+✘ Cache (Redis)
+✘ Rate limit avançado
+✘ Versionamento da API
+✘ Segurança avançada
+
+NÍVEL EMPRESA (TOP TIER):
+
+✘ Docker
+✘ Celery + Redis
+✘ Deploy (AWS / Railway / Render)
+✘ CI/CD
+✘ Monitoramento (Sentry)
+✘ README técnico completo
+
+CONCLUSÃO:
+
+Sua API já está em nível INTERMEDIÁRIO/AVANÇADO.
+Com os próximos ajustes, ela chega em nível PROFISSIONAL de mercado.

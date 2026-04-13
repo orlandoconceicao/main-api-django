@@ -98,8 +98,10 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 
     # Filtração
+    # Ordenação
     'DEFAULT_FILTER_BACKENDS': [
-    'django_filters.rest_framework.DjangoFilterBackend'
+    'django_filters.rest_framework.DjangoFilterBackend',
+    'rest_framework.filters.OrderingFilter',
     ],
 }
 

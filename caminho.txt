@@ -345,7 +345,7 @@ courses/migrations/0002_auditoria.py
 
 -----
 
-===== Documentação Swagger/Redoc: ===== (x)
+===== Documentação Swagger/Redoc: ===== (✓)
 - Gerar documentação automática com drf-yasg ou drf-spectacular
 - Disponibilizar endpoints interativos
 - Facilitar integração com frontend e terceiros

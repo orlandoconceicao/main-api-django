@@ -109,7 +109,7 @@ class CompraSerializer(serializers.ModelSerializer):
         model = Compra
         fields = ['id', 'usuario', 'curso', 'preco', 'status']
         # Campos sensiveis controlados por backend
-        read_only_fields = ['id', 'data', 'usuario', 'preco', 'status']
+        read_only_fields = ['id', 'usuario', 'preco', 'status']
 
     def create(self, validated_data):
         request = self.context.get('request')

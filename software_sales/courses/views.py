@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
@@ -7,11 +7,10 @@ from django.db.models import Avg
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Usuario, Curso, Compra, Avaliacao, CompraStatus
 from .serializers import UsuarioSerializer, CursoSerializer, AvaliacaoSerializer, CompraSerializer
 from .filters import CursoFilter, AvaliacaoFilter, CompraFilter
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
 
 # RESPONSE PADRÃO
 def response(success=True, data=None, error=None, status_code=status.HTTP_200_OK):

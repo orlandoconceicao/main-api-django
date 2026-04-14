@@ -2,6 +2,8 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator
 from django.db import models
+from django.db import models
+from django.conf import settings
 
 
 class Base(models.Model):
@@ -197,3 +199,31 @@ class Compra(Base):
             models.Index(fields=['status']),
             models.Index(fields=['usuario', 'curso', 'status']),
         ]
+
+class Auditoria(models.Model):
+
+    ACAO_CHOICES = (
+        ("CREATE", "Create"),
+        ("UPDATE", "Update"),
+        ("DELETE", "Delete"),
+    )
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
+
+    modelo = models.CharField(max_length=100)
+    objeto_id = models.IntegerField()
+
+    dados_antes = models.JSONField(null=True, blank=True)
+    dados_depois = models.JSONField(null=True, blank=True)
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-criado_em']

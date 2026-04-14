@@ -325,7 +325,7 @@ Regras
 
 -----
 
-===== Ordenação: ===== (x)
+===== Ordenação: ===== (✓)
 - Permitir ordenação dinâmica (?ordering=preco, -data)
 - Definir ordering_fields nas views
 - Útil para relatórios e análises
@@ -337,10 +337,11 @@ Regras
 /api/cursos/?ordering=preco,-criacao
 -----
 
-===== Logs de auditoria: ===== (x)
+===== Logs de auditoria: ===== (✓)
 - Registrar ações críticas (create, update, delete)
 - Armazenar usuário, ação e timestamp
 - Pode ser feito via signals ou middleware
+courses/migrations/0002_auditoria.py
 
 -----
 

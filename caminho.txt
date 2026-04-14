@@ -62,7 +62,7 @@ Configurar no settings.py:
            'ENGINE': 'django.db.backends.postgresql',
            'NAME': 'software_sales_db',
            'USER': 'api_user',
-           'PASSWORD': 'senha123',
+           'PASSWORD': '',
            'HOST': 'localhost',
            'PORT': 5432,
        }
@@ -350,6 +350,10 @@ courses/migrations/0002_auditoria.py
 - Disponibilizar endpoints interativos
 - Facilitar integração com frontend e terceiros
 
+Swagger UI:
+http://127.0.0.1:8000/swagger/
+Redoc:
+http://127.0.0.1:8000/redoc/
 -----
 
 ===== Histórico completo: ===== (x)

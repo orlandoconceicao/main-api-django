@@ -356,11 +356,16 @@ Redoc:
 http://127.0.0.1:8000/redoc/
 -----
 
-===== Histórico completo: ===== (x)
+===== Histórico completo: ===== (✓)
 - Endpoint para listar compras do usuário
 - Endpoint para avaliações feitas
 - Endpoint para reembolsos solicitados/concluídos
 - Relacionamento via ForeignKey garantindo rastreabilidade
+
+GET /api/usuarios/historico/
+GET /api/usuarios/minhas_compras/
+GET /api/usuarios/minhas_avaliacoes/
+GET /api/usuarios/meus_reembolsos/
 
 -----
 

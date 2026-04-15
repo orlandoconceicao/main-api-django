@@ -2,6 +2,7 @@ from rest_framework import serializers
 from decimal import Decimal
 from .models import Usuario, Curso, Avaliacao, Compra, CompraStatus
 
+
 # Serializer => Usuario 
 class UsuarioSerializer(serializers.ModelSerializer):
     # Senha so para escrita, não retorna na API
@@ -130,3 +131,12 @@ class CompraSerializer(serializers.ModelSerializer):
 class CompraStatusSerializer(serializers.Serializer):
     # Retorna todos os status disponiveis
     status = serializers.ChoiceField(choices=CompraStatus.choices)
+
+# Serializer => Histório
+class HistoricoSerializer(serializers.Serializer):
+    tipo = serializers.CharField()
+    curso = serializers.CharField()
+    nota = serializers.FloatField(required=False)
+    preco = serializers.CharField(required=False)
+    status = serializers.CharField(required=False)
+    data = serializers.DateTimeField()

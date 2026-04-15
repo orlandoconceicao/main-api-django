@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Usuario, Curso, Compra, Avaliacao, CompraStatus
 from .serializers import UsuarioSerializer, CursoSerializer, AvaliacaoSerializer, CompraSerializer
 from .filters import CursoFilter, AvaliacaoFilter, CompraFilter
+from .serializers import HistoricoSerializer
 
 # RESPONSE PADRÃO
 def response(success=True, data=None, error=None, status_code=status.HTTP_200_OK):
@@ -128,6 +129,57 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         compra.save(update_fields=['status'])
         return response(True, data="Reembolso realizado com sucesso")
 
+# Histórico
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def historico(self, request):
+        compras = Compra.objects.filter(
+            usuario=request.user
+        ).select_related('curso')
+
+        avaliacoes = Avaliacao.objects.filter(
+            usuario=request.user
+        ).select_related('curso')
+
+        eventos = []
+
+        # Compras + Reembolsos
+        for compra in compras:
+            eventos.append({
+                "tipo": "compra",
+                "curso": compra.curso.nome,
+                "preco": str(compra.preco),
+                "status": compra.status,
+                "data": compra.criacao
+            })
+
+            if compra.status == CompraStatus.REFUNDED:
+                eventos.append({
+                    "tipo": "reembolso",
+                    "curso": compra.curso.nome,
+                    "preco": str(compra.preco),
+                    "status": compra.status,
+                    "data": compra.atualizacao
+                })
+
+        # Avaliações
+        for avaliacao in avaliacoes:
+            eventos.append({
+                "tipo": "avaliacao",
+                "curso": avaliacao.curso.nome,
+                "nota": float(avaliacao.nota),
+                "data": avaliacao.criacao
+            })
+
+        eventos.sort(key=lambda x: x['data'], reverse=True)
+
+        page = self.paginate_queryset(eventos)
+
+        if page is not None:
+            serializer = HistoricoSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = HistoricoSerializer(eventos, many=True)
+        return response(True, data=serializer.data)
 
 # ADMIN
 class AdminCursoViewSet(viewsets.ModelViewSet):

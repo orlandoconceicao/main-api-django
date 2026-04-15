@@ -21,7 +21,19 @@ class UsuarioSerializer(serializers.ModelSerializer):
     
     def validate_email(self, value):
         # Normaliza email
-        return value.lower()
+        value = value.lower()
+
+        # Garante email unico (evita erro 500)
+        if Usuario.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email já está em uso")
+
+        return value
+
+    def validate_username(self, value):
+        # Valida tamanho minimo
+        if len(value) < 3:
+            raise serializers.ValidationError("Username muito curto")
+        return value
 
 
 # Serializer => Curso
@@ -41,15 +53,44 @@ class CursoSerializer(serializers.ModelSerializer):
         # Impede manipulação de dados sensíveis
         read_only_fields = ['id', 'total_vendas', 'criacao', 'criado_por']
 
+    def validate_nome(self, value):
+        # Nome minimo
+        if len(value) < 3:
+            raise serializers.ValidationError("Nome muito curto")
+        return value
+
+    def validate_descricao(self, value):
+        # Descrição minima
+        if len(value) < 10:
+            raise serializers.ValidationError("Descrição muito curta")
+        return value
+
     def validate_preco(self, value):
         # Valida preço mínimo
         if value < Decimal('0.00'):
-            raise serializers.ValidationError("Preço inválido.")
+            raise serializers.ValidationError("Preço não pode ser negativo")
+
+        # Valida preço máximo
+        if value > Decimal('999.00'):
+            raise serializers.ValidationError("Preço muito alto")
+
         return value 
+    
+    def validate(self, data):
+        # Regra de negócio global
+        nome = data.get("nome")
+        descricao = data.get("descricao")
+
+        # Evita descrição ruim
+        if nome and descricao and nome in descricao:
+            raise serializers.ValidationError("Descrição não pode repetir o nome")
+
+        return data
     
     def create(self, validated_data):
         # Define automaticamente o criador
         request = self.context.get('request')
+
         if not request or not request.user.is_authenticated:
             raise serializers.ValidationError("Usuário não identificado.")
         
@@ -72,8 +113,15 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Nota deve ser de 1 a 5")
         return value    
     
+    def validate_comentario(self, value):
+        # Evita comentario lixo
+        if value and len(value) < 3:
+            raise serializers.ValidationError("Comentário muito curto")
+        return value
+    
     def validate(self, data):
         request = self.context.get("request")
+
         if not request or not request.user.is_authenticated:
             raise serializers.ValidationError("Usuário não identificado.")
         
@@ -86,7 +134,9 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
         
         # Verifica se comprou
         if not Compra.objects.filter(
-            usuario=usuario, curso=curso, status=CompraStatus.COMPLETED
+            usuario=usuario, 
+            curso=curso, 
+            status=CompraStatus.COMPLETED
         ).exists():
             raise serializers.ValidationError("Você precisa comprar o curso antes de avaliar")
         
@@ -97,12 +147,13 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
         ).exclude(
             id=self.instance.id if self.instance else None
         ).exists():
-            raise serializers.ValidationError("Você ja avaliou esse curso.")
+            raise serializers.ValidationError("Você já avaliou esse curso.")
         
         # Define usuario automaticamente
         data['usuario'] = usuario
         return data
     
+
 # Serializer => Compra
 class CompraSerializer(serializers.ModelSerializer):
 
@@ -112,11 +163,35 @@ class CompraSerializer(serializers.ModelSerializer):
         # Campos sensiveis controlados por backend
         read_only_fields = ['id', 'usuario', 'preco', 'status']
 
+    def validate(self, data):
+        request = self.context.get('request')
+
+        # Garante usuario autenticado
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("Usuário não autenticado")
+        
+        usuario = request.user
+        curso = data.get('curso')
+
+        # Curso obrigatório
+        if not curso:
+            raise serializers.ValidationError("Curso é obrigatório")
+
+        # Impede compra duplicada
+        if Compra.objects.filter(
+            usuario=usuario, 
+            curso=curso
+        ).exists():
+            raise serializers.ValidationError("Você já comprou esse curso")
+
+        # Impede comprar próprio curso
+        if curso.criado_por == usuario:
+            raise serializers.ValidationError("Você não pode comprar seu próprio curso")
+
+        return data
+
     def create(self, validated_data):
         request = self.context.get('request')
-        if not request or not request.user.is_authenticated:
-            raise serializers.ValidationError("Usuário não identificado.")
-        
         usuario = request.user
         curso = validated_data['curso']
 
@@ -127,16 +202,29 @@ class CompraSerializer(serializers.ModelSerializer):
             preco=curso.preco
         )
     
+
 # Serializer => CompraStatus (choices)
 class CompraStatusSerializer(serializers.Serializer):
     # Retorna todos os status disponiveis
     status = serializers.ChoiceField(choices=CompraStatus.choices)
 
-# Serializer => Histório
+
+# Serializer => Histórico
 class HistoricoSerializer(serializers.Serializer):
+    # Tipo do evento (compra, avaliacao, reembolso)
     tipo = serializers.CharField()
+
+    # Nome do curso
     curso = serializers.CharField()
+
+    # Nota (opcional)
     nota = serializers.FloatField(required=False)
+
+    # Preço (opcional)
     preco = serializers.CharField(required=False)
+
+    # Status (opcional)
     status = serializers.CharField(required=False)
+
+    # Data do evento
     data = serializers.DateTimeField()

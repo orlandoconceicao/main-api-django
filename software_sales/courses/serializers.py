@@ -48,6 +48,11 @@ class CursoSerializer(serializers.ModelSerializer):
 
     # Campo calculado (usar annotate view)
     total_avaliacoes = serializers.IntegerField(read_only=True)
+    media_avaliacoes_calc = serializers.DecimalField(
+    max_digits=3,
+    decimal_places=2,
+    read_only=True
+)
 
     class Meta:
         model = Curso
@@ -60,7 +65,8 @@ class CursoSerializer(serializers.ModelSerializer):
             'criado_por_nome',
             'total_vendas',
             'total_avaliacoes',
-            'criacao'
+            'criacao',
+            'media_avaliacoes_calc',
         ]
 
         # Impede manipulação de dados sensíveis
@@ -92,12 +98,6 @@ class CursoSerializer(serializers.ModelSerializer):
         if value < Decimal('0.00'):
             raise serializers.ValidationError(
                 "Preço não pode ser negativo"
-            )
-
-        # Valida preço máximo
-        if value > Decimal('999.00'):
-            raise serializers.ValidationError(
-                "Preço máximo permitido é R$ 999,00"
             )
 
         return value
@@ -149,13 +149,6 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
             'usuario'
         ]
 
-    def validate_nota(self, value):
-        # Garante nota de 1 a 5
-        if value < 1 or value > 5:
-            raise serializers.ValidationError(
-                "Nota deve estar entre 1 e 5"
-            )
-        return value
 
     def validate_comentario(self, value):
         # Evita comentario lixo

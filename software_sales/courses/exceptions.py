@@ -1,5 +1,3 @@
-# courses/exceptions.py
-
 from rest_framework.views import exception_handler
 
 
@@ -9,22 +7,29 @@ def custom_exception_handler(exc, context):
     if response is not None:
         erros = response.data
 
-        # erro de validação de campo
         if isinstance(erros, dict):
             for campo, mensagem in erros.items():
                 if isinstance(mensagem, list):
                     mensagem = mensagem[0]
 
-                response.data = {
-                    "campo": campo,
-                    "erro": str(mensagem)
-                }
+                # trata non_field_errors melhor
+                if campo == "non_field_errors":
+                    response.data = {
+                        "success": False,
+                        "error": str(mensagem)
+                    }
+                else:
+                    response.data = {
+                        "success": False,
+                        "campo": campo,
+                        "error": str(mensagem)
+                    }
                 break
 
-        # erro geral
         elif isinstance(erros, list):
             response.data = {
-                "erro": str(erros[0])
+                "success": False,
+                "error": str(erros[0])
             }
 
     return response

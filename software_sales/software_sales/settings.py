@@ -10,6 +10,10 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
+DEFAULT_FROM_EMAIL = "noreply@seudominio.com"
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # USER CUSTOMIZADO
 AUTH_USER_MODEL = 'courses.Usuario'
 
@@ -108,6 +112,8 @@ REST_FRAMEWORK = {
     ],
 
     'EXCEPTION_HANDLER': 'courses.exceptions.custom_exception_handler',
+
+    
 }
 
 # JWT

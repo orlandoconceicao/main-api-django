@@ -3,15 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Avg
-from django.db import transaction
+from django.db.models import Avg, Count
+from django.db import transaction   
 from django.utils import timezone
 from datetime import timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Usuario, Curso, Compra, Avaliacao, CompraStatus
-from .serializers import UsuarioSerializer, CursoSerializer, AvaliacaoSerializer, CompraSerializer
+from .serializers import UsuarioSerializer, CursoSerializer, AvaliacaoSerializer, CompraSerializer, HistoricoSerializer
 from .filters import CursoFilter, AvaliacaoFilter, CompraFilter
-from .serializers import HistoricoSerializer
 
 # RESPONSE PADRÃO
 def response(success=True, data=None, error=None, status_code=status.HTTP_200_OK):
@@ -35,7 +34,6 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         permission_map = {
             'create': [permissions.AllowAny],
             'login': [permissions.AllowAny],
-            'cursos': [permissions.AllowAny],
             'comprar': [permissions.IsAuthenticated],
             'avaliar': [permissions.IsAuthenticated],
             'reembolso': [permissions.IsAuthenticated],
@@ -52,12 +50,14 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     # Login
     @action(detail=False, methods=['post'])
     def login(self, request):
-        email = request.data.get("email")
+        username = request.data.get("username")
         password = request.data.get("password")
-        if not email or not password:
+        if not username or not password:
             return response(False, error="Email e senha são obrigatórios", status_code=400)
 
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request,
+                            username=username,
+                            password=password)
         if not user:
             return response(False, error="Credenciais inválidas", status_code=401)
 
@@ -67,16 +67,6 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             "refresh": str(refresh),
             "access": str(refresh.access_token)
         })
-
-    # Listar cursos públicos
-    @action(detail=False, methods=['get'])
-    def cursos(self, request):
-        cursos = Curso.objects.filter(ativo=True).annotate(media=Avg('avaliacoes__nota'))
-        data = [
-            {"id": c.id, "nome": c.nome, "preco": c.preco, "media": round(c.media, 2) if c.media else None}
-            for c in cursos
-        ]
-        return response(True, data=data)
 
     # Comprar curso
     @action(detail=False, methods=['post'])
@@ -125,7 +115,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         if timezone.now() > compra.criacao + timedelta(days=7):
             return response(False, error="Prazo expirado", status_code=400)
 
-        compra.status = CompraStatus.REFUNDED
+        compra.status = CompraStatus.PENDING_REFUND
         compra.save(update_fields=['status'])
         return response(True, data="Reembolso realizado com sucesso")
 
@@ -183,7 +173,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
 # ADMIN
 class AdminCursoViewSet(viewsets.ModelViewSet):
-    queryset = Curso.objects.all()
+    queryset = Curso.objects.all().annotate(total_avaliacoes=Count('avaliacoes'), media_avaliacoes_calc=Avg('avaliacoes__nota'))
     serializer_class = CursoSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
     
@@ -196,7 +186,9 @@ class AdminCursoViewSet(viewsets.ModelViewSet):
         'preco',
         'criacao',
         'total_vendas',
-        'media_avaliacoes'
+        'media_avaliacoes_calc',
+        'total_avaliacoes',
+        'nome',
     ]
 
     ordering = ['-criacao']
@@ -240,7 +232,7 @@ class AdminCompraViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def rejeitar_reembolso(self, request, pk=None):
         compra = self.get_object()
-        if compra.status != CompraStatus.REFUNDED:
+        if compra.status != CompraStatus.PENDING_REFUND:
             return response(False, error="Reembolso não está pendente", status_code=400)
 
         compra.status = CompraStatus.COMPLETED
@@ -251,7 +243,7 @@ class AdminCompraViewSet(viewsets.ModelViewSet):
 # CURSOS PÚBLICOS
 class CursoViewSet(viewsets.ReadOnlyModelViewSet):
     
-    queryset = Curso.objects.filter(ativo=True).annotate(media=Avg('avaliacoes__nota'))
+    queryset = Curso.objects.filter(ativo=True).annotate(total_avaliacoes=Count('avaliacoes'), media_avaliacoes_calc=Avg('avaliacoes__nota'))
     serializer_class = CursoSerializer
     permission_classes = [permissions.AllowAny]
     filterset_class = CursoFilter
@@ -265,7 +257,8 @@ class CursoViewSet(viewsets.ReadOnlyModelViewSet):
         'preco',
         'criacao',
         'total_vendas',
-        'media',  # campo do annotate
+        'total_avaliacoes',
+        'media_avaliacoes_calc',
         'nome'
     ]
 

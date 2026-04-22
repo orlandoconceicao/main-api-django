@@ -376,14 +376,14 @@ GET /api/usuarios/meus_reembolsos/
 
 -----
 
-===== Validações: ===== (x)
+===== Validações: ===== (✓)
 - Implementar nos serializers (validate, validate_<campo>)
 - Garantir integridade dos dados
 - Exemplo: preço >= 0, nota entre 1 e 5
 
 -----
 
-===== Mensagens de erro claras: ===== (x)
+===== Mensagens de erro claras: ===== (✓)
 - Retornar JSON padronizado
 - Informar campo e motivo do erro
 - Exemplo: {"erro": "nota deve ser entre 1 e 5"}
@@ -392,11 +392,18 @@ GET /api/usuarios/meus_reembolsos/
 
 ===== 16. Nível Avançado (API FORTE) ===== (x)
 
-===== Docker: ===== (x)
+===== Docker: ===== (✓)
 - Criar Dockerfile para API Django
 - Configurar docker-compose (Django + PostgreSQL + Redis)
 - Padronizar ambiente de desenvolvimento e produção
+Dockerfile e um docker-compose.yml
 
+cd api_principal
+docker --version
+docker-compose up --build
+
+Prompt de Comando
+se der erro
 -----
 
 ===== Celery + Redis: ===== (x)
@@ -576,11 +583,11 @@ STATUS GERAL:
 PENDENTE (ALTA PRIORIDADE):
 
 ✘ Testes (crítico)
-✘ Ordenação
-✘ Logs de auditoria
-✘ Documentação Swagger
-✘ Validações completas
-✘ Mensagens de erro padronizadas
+✔ Ordenação
+✔ Logs de auditoria
+✔ Documentação Swagger
+✔ Validações completas
+✔ Mensagens de erro padronizadas
 
 NÍVEL PROFISSIONAL (PRÓXIMO PASSO):
 
@@ -593,7 +600,7 @@ NÍVEL PROFISSIONAL (PRÓXIMO PASSO):
 
 NÍVEL EMPRESA (TOP TIER):
 
-✘ Docker
+✔ Docker
 ✘ Celery + Redis
 ✘ Deploy (AWS / Railway / Render)
 ✘ CI/CD

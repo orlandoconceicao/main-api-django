@@ -17,7 +17,7 @@ services:
   web:
     build: .
     container_name: django_api
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "./wait-for-it.sh db:5432 -- python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:

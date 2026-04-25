@@ -2,7 +2,6 @@ from rest_framework import serializers
 from decimal import Decimal
 from .models import Usuario, Curso, Avaliacao, Compra, CompraStatus
 
-
 # Serializer => Usuario
 class UsuarioSerializer(serializers.ModelSerializer):
     # Senha so para escrita, não retorna na API

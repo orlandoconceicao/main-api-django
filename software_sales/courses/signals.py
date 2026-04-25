@@ -6,8 +6,6 @@ from django.db import models
 from django.db.models import F
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
-from django.core.mail import send_mail
-from django.conf import settings
 
 from .models import Compra, Avaliacao, Curso, CompraStatus, Auditoria
 
@@ -66,13 +64,6 @@ def compra_post_save(sender, instance, created, **kwargs):
             total_vendas=F('total_vendas') + 1
         )
 
-        send_mail(
-            subject='Compra concluída!',
-            message=f'Curso "{instance.curso.nome}" comprado com sucesso!',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[instance.usuario.email],
-            fail_silently=True
-        )
 
     if instance.status == CompraStatus.REFUNDED and status_anterior == CompraStatus.COMPLETED:
         Curso.objects.filter(pk=instance.curso.pk).update(

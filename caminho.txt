@@ -400,6 +400,7 @@ Dockerfile e um docker-compose.yml
 
 cd api_principal
 docker --version
+
 docker-compose down -v
 docker-compose up --build
 
@@ -409,6 +410,12 @@ docker ps
 Prompt de Comando
 se der erro
 -----
+otimizar docker
+
+- DEV
+docker-compose -f docker-compose.dev.yml up --build
+- PROD
+docker-compose -f docker-compose.prod.yml up --build -d
 
 ===== Celery + Redis: ===== (x)
 - Configurar filas assíncronas
@@ -416,6 +423,11 @@ se der erro
 - Processamento de tarefas demoradas
 
 -----
+- DEV
+docker-compose -f docker-compose.dev.yml up --build
+- PROD
+docker-compose -f docker-compose.prod.yml up --build -d
+
 
 ===== Deploy: ===== (x)
 - Subir aplicação em Railway, Render ou AWS

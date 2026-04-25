@@ -1,7 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
-import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -11,9 +10,16 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
-DEFAULT_FROM_EMAIL = "noreply@seudominio.com"
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # USER CUSTOMIZADO
 AUTH_USER_MODEL = 'courses.Usuario'
@@ -152,3 +158,13 @@ TEMPLATES = [
         },
     },
 ]
+
+# CELERY + REDIS
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+STATIC_ROOT = BASE_DIR / "static"

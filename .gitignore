@@ -95,3 +95,28 @@ temp/
 *.bak
 *.backup
 *.old
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Django
+*.sqlite3
+media/
+staticfiles/
+
+# Env
+.env
+.env.*
+
+# Docker volumes
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# system
+.DS_Store

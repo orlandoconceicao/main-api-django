@@ -6,9 +6,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="127.0.0.1,localhost,softwaresales-api.onrender.com",
+    cast=lambda v: [s.strip() for s in v.split(",")]
+)
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
@@ -65,7 +69,9 @@ MIDDLEWARE = [
 ]
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://softwaresales-api.onrender.com",
+]
 
 # URLS / WSGI
 ROOT_URLCONF = 'software_sales.urls'
@@ -161,20 +167,10 @@ TEMPLATES = [
 
 # CELERY + REDIS
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
-STATIC_ROOT = BASE_DIR / "static"
-
-ALLOWED_HOSTS = [
-    "api.seusite.com",
-]
-
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="127.0.0.1,localhost",
-    cast=lambda v: [s.strip() for s in v.split(",")]
-)
+STATIC_ROOT = BASE_DIR / "staticfiles"

@@ -3,27 +3,27 @@ from datetime import datetime
 import threading
 
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Avg
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
+from django.db import connection
+from django.apps import apps
 
 from .models import Compra, Avaliacao, Curso, CompraStatus, Auditoria
 
-# Contexto usuário
-
 _thread_locals = threading.local()
+
 
 def get_current_user():
     return getattr(_thread_locals, "user", None)
 
-# Serialização segura
 
 def serialize_value(value):
     if isinstance(value, datetime):
         return value.isoformat()
     if isinstance(value, Decimal):
         return str(value)
-    if hasattr(value, "id"):  # ForeignKey
+    if hasattr(value, "id"):
         return value.id
     return value
 
@@ -36,60 +36,61 @@ def model_to_dict(instance):
 
 
 def is_valid_model(sender):
-    return sender.__name__ not in [
-        "Auditoria",
-        "MigrationRecorder",
-        "ContentType",
-        "Session"
-    ]
+    if not apps.ready:
+        return False
 
-# lógica de negócio
+    if connection.connection is None:
+        return False
 
-# Guarda status antigo
+    if sender._meta.app_label in ["contenttypes", "sessions", "admin"]:
+        return False
+
+    if sender.__name__ == "Auditoria":
+        return False
+
+    return True
+
+
 @receiver(pre_save, sender=Compra)
 def guardar_status_anterior(sender, instance, **kwargs):
     if instance.pk:
-        instance._status_anterior = sender.objects.get(pk=instance.pk).status
+        try:
+            instance._status_anterior = sender.objects.get(pk=instance.pk).status
+        except sender.DoesNotExist:
+            instance._status_anterior = None
     else:
         instance._status_anterior = None
 
 
-# Atualiza vendas + email
 @receiver(post_save, sender=Compra)
 def compra_post_save(sender, instance, created, **kwargs):
-    status_anterior = getattr(instance, '_status_anterior', None)
+    status_anterior = getattr(instance, "_status_anterior", None)
 
     if instance.status == CompraStatus.COMPLETED and status_anterior != CompraStatus.COMPLETED:
         Curso.objects.filter(pk=instance.curso.pk).update(
-            total_vendas=F('total_vendas') + 1
+            total_vendas=F("total_vendas") + 1
         )
-
 
     if instance.status == CompraStatus.REFUNDED and status_anterior == CompraStatus.COMPLETED:
         Curso.objects.filter(pk=instance.curso.pk).update(
-            total_vendas=F('total_vendas') - 1
+            total_vendas=F("total_vendas") - 1
         )
 
 
-# Atualiza média de avaliações
-@receiver(post_save, sender=Avaliacao)
-@receiver(post_delete, sender=Avaliacao)
+@receiver([post_save, post_delete], sender=Avaliacao)
 def atualizar_media(sender, instance, **kwargs):
     media = instance.curso.avaliacoes.aggregate(
-        media=models.Avg('nota')
-    )['media'] or Decimal('0.00')
+        media=Avg("nota")
+    )["media"] or Decimal("0.00")
 
     instance.curso.media_avaliacoes = Decimal(media).quantize(
-        Decimal('0.01'),
+        Decimal("0.01"),
         rounding=ROUND_HALF_UP
     )
 
-    instance.curso.save(update_fields=['media_avaliacoes'])
+    instance.curso.save(update_fields=["media_avaliacoes"])
 
 
-# Auditoria
-
-# Captura estado antes
 @receiver(pre_save)
 def auditoria_pre_save(sender, instance, **kwargs):
     if not is_valid_model(sender):
@@ -105,40 +106,47 @@ def auditoria_pre_save(sender, instance, **kwargs):
         instance._old_data = None
 
 
-# Create / update
 @receiver(post_save)
 def auditoria_post_save(sender, instance, created, **kwargs):
     if not is_valid_model(sender):
         return
 
-    old_data = getattr(instance, "_old_data", None)
-    new_data = model_to_dict(instance)
-
-    # evita log sem mudança real
-    if not created and old_data == new_data:
+    if connection.introspection.table_names() == []:
         return
 
-    Auditoria.objects.create(
-        usuario=get_current_user(),
-        acao="CREATE" if created else "UPDATE",
-        modelo=sender.__name__,
-        objeto_id=instance.pk,
-        dados_antes=None if created else old_data,
-        dados_depois=new_data
-    )
+    try:
+        old_data = getattr(instance, "_old_data", None)
+        new_data = model_to_dict(instance)
+
+        if not created and old_data == new_data:
+            return
+
+        Auditoria.objects.create(
+            usuario=get_current_user(),
+            acao="CREATE" if created else "UPDATE",
+            modelo=sender.__name__,
+            objeto_id=instance.pk,
+            dados_antes=None if created else old_data,
+            dados_depois=new_data
+        )
+
+    except Exception:
+        return
 
 
-# Delete
 @receiver(post_delete)
 def auditoria_delete(sender, instance, **kwargs):
     if not is_valid_model(sender):
         return
 
-    Auditoria.objects.create(
-        usuario=get_current_user(),
-        acao="DELETE",
-        modelo=sender.__name__,
-        objeto_id=instance.pk,
-        dados_antes=model_to_dict(instance),
-        dados_depois=None
-    )
+    try:
+        Auditoria.objects.create(
+            usuario=get_current_user(),
+            acao="DELETE",
+            modelo=sender.__name__,
+            objeto_id=instance.pk,
+            dados_antes=model_to_dict(instance),
+            dados_depois=None
+        )
+    except Exception:
+        return

@@ -7,7 +7,6 @@ from django.db.models import F, Avg
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.db import connection
-from django.apps import apps
 
 from .models import Compra, Avaliacao, Curso, CompraStatus, Auditoria
 
@@ -23,8 +22,8 @@ def serialize_value(value):
         return value.isoformat()
     if isinstance(value, Decimal):
         return str(value)
-    if hasattr(value, "id"):
-        return value.id
+    if hasattr(value, "pk"):
+        return value.pk
     return value
 
 
@@ -35,13 +34,14 @@ def model_to_dict(instance):
     }
 
 
+def table_exists(table_name: str) -> bool:
+    try:
+        return table_name in connection.introspection.table_names()
+    except Exception:
+        return False
+
+
 def is_valid_model(sender):
-    if not apps.ready:
-        return False
-
-    if connection.connection is None:
-        return False
-
     if sender._meta.app_label in ["contenttypes", "sessions", "admin"]:
         return False
 
@@ -49,7 +49,8 @@ def is_valid_model(sender):
         return False
 
     return True
-
+    
+# COMPRA
 
 @receiver(pre_save, sender=Compra)
 def guardar_status_anterior(sender, instance, **kwargs):
@@ -75,7 +76,8 @@ def compra_post_save(sender, instance, created, **kwargs):
         Curso.objects.filter(pk=instance.curso.pk).update(
             total_vendas=F("total_vendas") - 1
         )
-
+        
+# AVALIAÇÃO
 
 @receiver([post_save, post_delete], sender=Avaliacao)
 def atualizar_media(sender, instance, **kwargs):
@@ -89,7 +91,8 @@ def atualizar_media(sender, instance, **kwargs):
     )
 
     instance.curso.save(update_fields=["media_avaliacoes"])
-
+    
+# AUDITORIA
 
 @receiver(pre_save)
 def auditoria_pre_save(sender, instance, **kwargs):
@@ -111,7 +114,8 @@ def auditoria_post_save(sender, instance, created, **kwargs):
     if not is_valid_model(sender):
         return
 
-    if connection.introspection.table_names() == []:
+    # CRÍTICO: evita rodar antes das migrations existirem
+    if not table_exists("courses_auditoria"):
         return
 
     try:
@@ -137,6 +141,9 @@ def auditoria_post_save(sender, instance, created, **kwargs):
 @receiver(post_delete)
 def auditoria_delete(sender, instance, **kwargs):
     if not is_valid_model(sender):
+        return
+
+    if not table_exists("courses_auditoria"):
         return
 
     try:

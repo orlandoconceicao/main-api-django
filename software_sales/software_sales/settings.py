@@ -168,3 +168,13 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
 STATIC_ROOT = BASE_DIR / "static"
+
+ALLOWED_HOSTS = [
+    "api.seusite.com",
+]
+
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="127.0.0.1,localhost",
+    cast=lambda v: [s.strip() for s in v.split(",")]
+)

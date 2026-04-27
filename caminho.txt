@@ -417,7 +417,7 @@ docker-compose -f docker-compose.dev.yml up --build
 - PROD
 docker-compose -f docker-compose.prod.yml up --build -d
 
-===== Celery + Redis: ===== (x)
+===== Celery + Redis: ===== (✔)
 - Configurar filas assíncronas
 - Envio de emails em background
 - Processamento de tarefas demoradas
@@ -617,7 +617,7 @@ NÍVEL PROFISSIONAL (PRÓXIMO PASSO):
 NÍVEL EMPRESA (TOP TIER):
 
 ✔ Docker
-✘ Celery + Redis
+✔ Celery + Redis
 ✘ Deploy (AWS / Railway / Render)
 ✘ CI/CD
 ✘ Monitoramento (Sentry)

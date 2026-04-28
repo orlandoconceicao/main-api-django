@@ -8,13 +8,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # CORE
 
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    default="*",
+    default=".onrender.com,127.0.0.1,localhost",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
@@ -29,7 +29,7 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# USER
+# USER CUSTOM
 
 AUTH_USER_MODEL = "courses.Usuario"
 
@@ -43,12 +43,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # terceiros
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
     "drf_yasg",
     "django_filters",
 
+    # app
     "courses.apps.CoursesConfig",
 ]
 
@@ -76,35 +78,39 @@ CORS_ALLOWED_ORIGINS = [
     "https://seu-frontend.vercel.app",
 ]
 
-# URL / WSGI
+# URLS / WSGI
 
 ROOT_URLCONF = "software_sales.urls"
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
-# DATABASE (CORRIGIDO)
+# DATABASE (PRODUÇÃO SAFE)
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL"),
+        default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
         conn_max_age=600
     )
 }
 
-# VALIDATORS
+# PASSWORD VALIDATION
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"
+    },
 ]
 
-# INTERNATIONAL
+# INTERNATIONALIZATION
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-# STATIC (CORRIGIDO PRO RENDER)
+# STATIC FILES (RENDER OK)
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -118,7 +124,7 @@ STORAGES = {
     },
 }
 
-# REST
+# REST FRAMEWORK
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -187,9 +193,11 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "America/Sao_Paulo"
 
-# AUTO FIELD
+# DEFAULT AUTO FIELD
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# PRODUCTION SAFETY
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

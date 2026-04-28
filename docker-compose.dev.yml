@@ -1,6 +1,26 @@
 version: "3.9"
 
 services:
+  db:
+    image: postgres:15
+    container_name: api_db_dev
+    restart: always
+    environment:
+      POSTGRES_DB: software_sales_db
+      POSTGRES_USER: api_user
+      POSTGRES_PASSWORD: 577643121Aa.
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: api_redis_dev
+    restart: always
+    ports:
+      - "6379:6379"
+
   web:
     build:
       context: .
@@ -16,13 +36,14 @@ services:
     depends_on:
       - db
       - redis
+    restart: always
 
   celery:
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
     container_name: api_celery_dev
-    command: celery -A software_sales worker -l info
+    command: celery -A software_sales worker --loglevel=info
     volumes:
       - .:/app
     env_file:
@@ -30,3 +51,7 @@ services:
     depends_on:
       - db
       - redis
+    restart: always
+
+volumes:
+  postgres_data_dev:

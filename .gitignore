@@ -21,28 +21,19 @@ env/
 *.log
 local_settings.py
 db.sqlite3
+*.sqlite3
 
 media/
 staticfiles/
 collected_static/
 
-# migrations (opcional: NÃO ignorar em time)
+# migrations (opcional)
 # */migrations/*.py
 # !*/migrations/__init__.py
 
-# DJANGO STATIC (gerado)
-
+# static gerado
 static/
 */static/
-
-# DOCKER
-
-postgres_data/
-docker/data/
-
-*.pid
-*.seed
-*.log
 
 # ENVIRONMENT VARIABLES
 
@@ -51,23 +42,18 @@ docker/data/
 !.env.example
 .env.docker
 
+# DOCKER
+
+postgres_data/
+docker/data/
+
+*.pid
+*.seed
+
 # CELERY
 
 celerybeat-schedule
 celerybeat.pid
-
-# IDE / EDITORES
-
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# WINDOWS / MAC / LINUX
-
-.DS_Store
-Thumbs.db
-ehthumbs.db
 
 # TESTS / COVERAGE
 
@@ -76,7 +62,20 @@ htmlcov/
 .pytest_cache/
 .tox/
 
-# NODE (caso use frontend futuro)
+# IDE / EDITORES
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# SISTEMA
+
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# NODE (caso frontend futuro)
 
 node_modules/
 npm-debug.log*
@@ -85,7 +84,6 @@ yarn-error.log*
 
 # LOGS E TEMP
 
-*.log
 logs/
 tmp/
 temp/
@@ -95,28 +93,3 @@ temp/
 *.bak
 *.backup
 *.old
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-
-# Django
-*.sqlite3
-media/
-staticfiles/
-
-# Env
-.env
-.env.*
-
-# Docker volumes
-*.log
-
-# IDE
-.vscode/
-.idea/
-
-# system
-.DS_Store

@@ -5,16 +5,25 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Dependências do sistema
+RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
+
+# Dependências Python
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+# Copia projeto
 COPY . .
 
+# Permissão do entrypoint
 RUN chmod +x /app/docker/entrypoint.sh
 
+# Pasta principal do Django
 WORKDIR /app/software_sales
 
+# Entrypoint
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
 
+# Produção
 CMD ["gunicorn", "software_sales.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

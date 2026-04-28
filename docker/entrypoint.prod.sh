@@ -1,16 +1,18 @@
 #!/bin/sh
 
-echo "⏳ Aguardando banco de dados..."
+echo "Aguardando banco de dados..."
 
-# espera o Postgres ficar disponível
 while ! nc -z db 5432; do
   sleep 1
 done
 
-echo "Banco conectado!"
+echo "Banco de dados conectado!"
 
-echo "Rodando migrations..."
+echo "Rodando migrações..."
 python manage.py migrate --noinput
 
-echo "Iniciando Django (DEV mode)..."
-python manage.py runserver 0.0.0.0:8000
+echo "Coletando static files..."
+python manage.py collectstatic --noinput
+
+echo "Iniciando Gunicorn (PROD)..."
+gunicorn software_sales.wsgi:application --bind 0.0.0.0:8000 --workers 3

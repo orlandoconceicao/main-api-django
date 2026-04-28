@@ -1,5 +1,13 @@
 -- Active: 1775603291622@@127.0.0.1@5432@postgres
+Resumo profissional
+WEB DEV
+python manage.py runserver
 
+WEB PROD
+gunicorn software_sales.wsgi:application
+
+CELERY
+celery -A software_sales worker -l info
 ===========================================
 PASSO A PASSO DETALHADO – API PROFISSIONAL
 ===========================================

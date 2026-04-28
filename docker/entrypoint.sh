@@ -1,19 +1,22 @@
 #!/bin/sh
 
-echo "Aguardando banco de dados..."
+set -e
+
+echo "Aguardando banco..."
 
 while ! nc -z db 5432; do
   sleep 1
 done
 
-echo "Banco conectado!"
-
 echo "Rodando migrations..."
 python manage.py migrate --noinput
 
-echo "Coletando arquivos estáticos..."
+echo "Coletando static..."
 python manage.py collectstatic --noinput
 
 echo "Iniciando Gunicorn..."
 
-gunicorn software_sales.wsgi:application --bind 0.0.0.0:8000 --workers 3
+exec gunicorn software_sales.wsgi:application \
+  --bind 0.0.0.0:${PORT:-8000} \
+  --workers 3 \
+  --timeout 120

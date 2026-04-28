@@ -5,6 +5,10 @@ services:
     restart: always
     env_file:
       - .env.docker
+    environment:
+      POSTGRES_DB: software_sales_db
+      POSTGRES_USER: api_user
+      POSTGRES_PASSWORD: 577643121Aa.
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

@@ -205,3 +205,7 @@ if not DEBUG:
 
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+import sys
+
+print("DJANGO STARTING...", file=sys.stderr)

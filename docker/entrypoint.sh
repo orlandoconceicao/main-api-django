@@ -1,16 +1,7 @@
 #!/bin/sh
-
 set -e
 
 echo "=== STARTING APP ==="
-
-echo "Aguardando banco..."
-
-while ! nc -z db 5432; do
-  sleep 1
-done
-
-echo "Banco conectado!"
 
 echo "Rodando migrations..."
 python manage.py migrate --noinput
@@ -19,7 +10,7 @@ echo "Coletando static..."
 python manage.py collectstatic --noinput
 
 echo "Verificando Django..."
-python manage.py check
+python manage.py check --deploy
 
 echo "Iniciando Gunicorn..."
 

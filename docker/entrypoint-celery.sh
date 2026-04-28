@@ -2,16 +2,12 @@
 
 set -e
 
-echo "Aguardando banco de dados..."
+echo "Aguardando banco..."
 
 while ! nc -z db 5432; do
   sleep 1
 done
 
-echo "Banco conectado!"
-
 echo "Iniciando Celery..."
 
-exec celery -A software_sales worker \
-  --loglevel=info \
-  --concurrency=4
+exec celery -A software_sales worker -l info

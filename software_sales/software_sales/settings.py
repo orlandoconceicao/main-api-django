@@ -2,14 +2,11 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import dj_database_url
-import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # CORE
-
 SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
-
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
@@ -18,23 +15,7 @@ ALLOWED_HOSTS = config(
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
-# EMAIL
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# USER CUSTOM
-
-AUTH_USER_MODEL = "courses.Usuario"
-
 # APPS
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -43,19 +24,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # terceiros
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
     "drf_yasg",
     "django_filters",
 
-    # app
     "courses.apps.CoursesConfig",
 ]
 
-# MIDDLEWARE
-
+# MIDDLEWARE (SEGURO)
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -72,19 +50,10 @@ MIDDLEWARE = [
     "courses.middleware.AuditoriaMiddleware",
 ]
 
-# CORS
-
-CORS_ALLOWED_ORIGINS = [
-    "https://seu-frontend.vercel.app",
-]
-
-# URLS / WSGI
-
 ROOT_URLCONF = "software_sales.urls"
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
-# DATABASE (PRODUÇÃO SAFE)
-
+# DATABASE (PROD SAFE)
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
@@ -92,40 +61,11 @@ DATABASES = {
     )
 }
 
-# PASSWORD VALIDATION
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"
-    },
-]
-
-# INTERNATIONALIZATION
-
-LANGUAGE_CODE = "pt-br"
-TIME_ZONE = "America/Sao_Paulo"
-USE_I18N = True
-USE_TZ = True
-
-# STATIC FILES (RENDER OK)
-
+# STATIC
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
-# REST FRAMEWORK
-
+# REST
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -133,79 +73,21 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.AllowAny",
     ),
-    "DEFAULT_PAGINATION_CLASS": (
-        "rest_framework.pagination.PageNumberPagination",
-    ),
-    "PAGE_SIZE": 10,
-    "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.OrderingFilter",
-    ],
-    "EXCEPTION_HANDLER": "courses.exceptions.custom_exception_handler",
 }
 
 # JWT
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-# SWAGGER
-
-SWAGGER_SETTINGS = {
-    "USE_SESSION_AUTH": False,
-    "SECURITY_DEFINITIONS": {
-        "Bearer": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header",
-        }
-    },
-}
-
-# TEMPLATES
-
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
-
-# CELERY
-
-CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379/0")
-CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379/0")
-
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "America/Sao_Paulo"
-
-# DEFAULT AUTO FIELD
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# CELERY (SEM RISCO NO RENDER)
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="")
 
 # PRODUCTION SAFETY
-
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = False
-
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-
-import sys
-
-print("DJANGO STARTING...", file=sys.stderr)

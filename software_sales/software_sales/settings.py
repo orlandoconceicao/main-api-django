@@ -9,7 +9,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # CORE
 SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
-
 DEBUG = config("DEBUG", default=True, cast=bool)
 
 ALLOWED_HOSTS = config(
@@ -33,11 +32,10 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "drf_yasg",
+    "jazzmin",
 
     # app
     "courses",
-
-    "jazzmin",
 ]
 
 
@@ -54,32 +52,30 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    "courses.middleware.AuditoriaMiddleware",
 ]
 
 
-# URLS
 ROOT_URLCONF = "software_sales.urls"
-
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
 
-# DATABASE (LOCAL + PROD SAFE)
-DATABASE_URL = config("DATABASE_URL", default="")
-
+# DATABASE (CORRIGIDO)
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL"),
+        default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=False  # <- FIX PRINCIPAL DO ERRO DO RENDER/LOCAL
     )
 }
 
 
-# AUTH
+# AUTH USER
 AUTH_USER_MODEL = "courses.Usuario"
 
 
-# TEMPLATES (IMPORTANTE ADMIN)
+# TEMPLATES (ADMIN FIX)
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -96,7 +92,7 @@ TEMPLATES = [
 ]
 
 
-# STATIC FILES (RENDER OK)
+# STATIC
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -115,6 +111,9 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.AllowAny",
+    ),
 }
 
 
@@ -128,13 +127,9 @@ SIMPLE_JWT = {
 
 # LANGUAGE / TIME
 LANGUAGE_CODE = "pt-br"
-
 TIME_ZONE = "America/Sao_Paulo"
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# DEFAULT AUTO FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

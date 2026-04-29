@@ -12,6 +12,6 @@ class AuditoriaMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        _thread_locals.user = getattr(request, "user", None)
+        _thread_locals.user = request.user if hasattr(request, "user") else None
         response = self.get_response(request)
         return response

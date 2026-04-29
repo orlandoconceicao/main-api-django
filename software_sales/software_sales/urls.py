@@ -1,5 +1,5 @@
-from django.contrib import admin
 from django.urls import path, include
+from django.contrib import admin
 from django.http import JsonResponse
 
 from rest_framework import permissions
@@ -25,22 +25,33 @@ def home(request):
         "status": "API rodando",
         "swagger": "/swagger/",
         "redoc": "/redoc/",
-        "admin": "/admin/",
-        "api": "/api/"
     })
 
 
 urlpatterns = [
     path("", home),
 
-    # Django admin
     path("admin/", admin.site.urls),
 
-    # APIs
     path("api/", include(public_router.urls)),
     path("api/admin/", include(admin_router.urls)),
 
-    # Docs
-    path("swagger/", schema_view.with_ui("swagger", cache_timeout=0)),
-    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0)),
+    # IMPORTANTE: schema JSON separado
+    path(
+        "swagger.json",
+        schema_view.without_ui(cache_timeout=0),
+        name="schema-json"
+    ),
+
+    path(
+        "swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="swagger-ui"
+    ),
+
+    path(
+        "redoc/",
+        schema_view.with_ui("redoc", cache_timeout=0),
+        name="redoc"
+    ),
 ]

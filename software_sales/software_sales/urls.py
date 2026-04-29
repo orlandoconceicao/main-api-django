@@ -18,7 +18,10 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    patterns=[],
+    patterns=[
+    path("api/", include(public_router.urls)),
+    path("api/admin/", include(admin_router.urls)),
+],
 )
 
 

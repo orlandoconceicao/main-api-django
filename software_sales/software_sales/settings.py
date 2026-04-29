@@ -6,20 +6,20 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# CORE
 
+# CORE
 SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
 
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = config("DEBUG", default=True, cast=bool)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    default=".onrender.com,127.0.0.1,localhost",
+    default="127.0.0.1,localhost,.onrender.com",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
-# APPS
 
+# APPS
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -28,17 +28,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # terceiros
     "rest_framework",
-    "rest_framework.authtoken",
     "corsheaders",
-    "drf_yasg",
     "django_filters",
+    "drf_yasg",
 
-    "courses.apps.CoursesConfig",
+    # app
+    "courses",
 ]
 
-# MIDDLEWARE
 
+# MIDDLEWARE
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -51,64 +52,87 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
-    "courses.middleware.AuditoriaMiddleware",
 ]
 
-# URL / WSGI
 
+# URLS
 ROOT_URLCONF = "software_sales.urls"
+
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
-# DATABASE
+
+# DATABASE (LOCAL + PROD SAFE)
+DATABASE_URL = config("DATABASE_URL", default="")
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
-        conn_max_age=600
+        default=config("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True
     )
 }
 
-# STATIC FILES (Render OK)
 
+# AUTH
+AUTH_USER_MODEL = "courses.Usuario"
+
+
+# TEMPLATES (IMPORTANTE ADMIN)
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+
+# STATIC FILES (RENDER OK)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+
+# CORS
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://seu-frontend.vercel.app",
+]
+
 
 # REST FRAMEWORK
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.AllowAny",
-    ),
 }
 
-# JWT
 
+# JWT
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-# CELERY
 
-CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379/0")
-CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379/0")
+# LANGUAGE / TIME
+LANGUAGE_CODE = "pt-br"
 
-# SAFETY PROD
+TIME_ZONE = "America/Sao_Paulo"
 
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+USE_I18N = True
 
+USE_TZ = True
+
+
+# DEFAULT AUTO FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

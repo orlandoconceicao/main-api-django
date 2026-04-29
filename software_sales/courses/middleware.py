@@ -12,12 +12,6 @@ class AuditoriaMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        try:
-            _thread_locals.user = getattr(request, "user", None)
-        except Exception:
-            _thread_locals.user = None
-
+        _thread_locals.user = getattr(request, "user", None)
         response = self.get_response(request)
-
-        _thread_locals.user = None
         return response

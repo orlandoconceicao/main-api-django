@@ -1,4 +1,4 @@
-from django.conf import settings
+'''from django.conf import settings
 from django.core.mail import send_mail
 
 
@@ -120,4 +120,4 @@ def enviar_relatorio_diario(email):
         recipient_list=[email],
         fail_silently=False,
     )
-    return "Relatório enviado"
+    return "Relatório enviado"'''

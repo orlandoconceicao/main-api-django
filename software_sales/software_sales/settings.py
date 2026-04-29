@@ -6,6 +6,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY
 SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "courses",
 ]
 
+# MIDDLEWARE
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -53,7 +55,7 @@ ROOT_URLCONF = "software_sales.urls"
 
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
-# DATABASE (CORRETO PARA RENDER)
+# DATABASE (Render)
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL"),
@@ -62,7 +64,7 @@ DATABASES = {
     )
 }
 
-# TEMPLATES (ADMIN OK)
+# TEMPLATES
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -78,20 +80,48 @@ TEMPLATES = [
     },
 ]
 
+# STATIC
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
 STATICFILES_DIRS = []
 
-# IMPORTANTE
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# CUSTOM USER
 AUTH_USER_MODEL = "courses.Usuario"
 
+# CORS (produção)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# DRF (PRODUÇÃO LIMPA + JWT)
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+    ),
+}
+
+# JWT
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
+
+# SWAGGER (CORREÇÃO DO SEU ERRO)
+SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,  # ISSO REMOVE /accounts/login/
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
 }

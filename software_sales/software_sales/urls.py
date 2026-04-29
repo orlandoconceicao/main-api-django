@@ -8,15 +8,17 @@ from drf_yasg import openapi
 
 from courses.urls import public_router, admin_router
 
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
-        default_version='v1',
+        default_version="v1",
         description="API documentação",
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
+
 
 def home(request):
     return JsonResponse({
@@ -27,14 +29,18 @@ def home(request):
         "api": "/api/"
     })
 
+
 urlpatterns = [
     path("", home),
 
+    # Django admin
     path("admin/", admin.site.urls),
 
+    # APIs
     path("api/", include(public_router.urls)),
     path("api/admin/", include(admin_router.urls)),
 
+    # Docs
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0)),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0)),
 ]

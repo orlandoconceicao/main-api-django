@@ -8,26 +8,24 @@ from drf_yasg import openapi
 
 from courses.urls import public_router, admin_router
 
-
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
-        default_version="v1",
-        description="API Docs",
+        default_version='v1',
+        description="API documentação",
     ),
     public=True,
-    permission_classes=[permissions.AllowAny],
+    permission_classes=(permissions.AllowAny,),
 )
-
 
 def home(request):
     return JsonResponse({
         "status": "API rodando",
         "swagger": "/swagger/",
+        "redoc": "/redoc/",
         "admin": "/admin/",
         "api": "/api/"
     })
-
 
 urlpatterns = [
     path("", home),
@@ -37,18 +35,6 @@ urlpatterns = [
     path("api/", include(public_router.urls)),
     path("api/admin/", include(admin_router.urls)),
 
-    # REMOVE DEPENDÊNCIA DE LOGIN
-    path("accounts/", include("django.contrib.auth.urls")),
-
-    path(
-        "swagger/",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="swagger-ui"
-    ),
-
-    path(
-        "redoc/",
-        schema_view.with_ui("redoc", cache_timeout=0),
-        name="redoc"
-    ),
+    path("swagger/", schema_view.with_ui("swagger", cache_timeout=0)),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0)),
 ]

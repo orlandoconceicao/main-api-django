@@ -8,8 +8,7 @@ from drf_yasg import openapi
 
 from courses.urls import public_router, admin_router
 
-
-# Swagger config
+# SWAGGER CONFIG
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
@@ -21,26 +20,34 @@ schema_view = get_schema_view(
 )
 
 
-# Home da API
+# HOME DA API
 def home(request):
     return JsonResponse({
         "status": "API rodando",
         "docs": "/swagger/",
+        "redoc": "/redoc/",
         "admin": "/admin/",
         "api": "/api/"
     })
 
 
+# URLS PRINCIPAIS
 urlpatterns = [
     path('', home),
 
+    # ADMIN DJANGO
     path('admin/', admin.site.urls),
 
-    # API
+    # AUTH (EVITA ERRO /accounts/login/)
+    path('accounts/', include('django.contrib.auth.urls')),
+
+    # API PUBLICA
     path('api/', include(public_router.urls)),
+
+    # API ADMIN
     path('api/admin/', include(admin_router.urls)),
 
-    # SWAGGER
+    # SWAGGER / DOCS
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
 ]

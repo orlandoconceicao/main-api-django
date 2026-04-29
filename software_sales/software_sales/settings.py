@@ -36,6 +36,9 @@ INSTALLED_APPS = [
 
     # app
     "courses",
+
+    "jazzmin",
+    "django.contrib.admin",
 ]
 
 

@@ -9,6 +9,7 @@ from drf_yasg import openapi
 from courses.urls import public_router, admin_router
 
 
+# Swagger / OpenAPI
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
@@ -19,41 +20,46 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-path(
-    "swagger.json",
-    schema_view.without_ui(cache_timeout=0),
-    name="schema-json"
-),
 
+# Home da API
 def home(request):
     return JsonResponse({
         "status": "API rodando",
         "swagger": "/swagger/",
         "redoc": "/redoc/",
+        "api": "/api/",
+        "admin": "/admin/"
     })
 
 
 urlpatterns = [
+    # Home
     path("", home),
 
+    # Django Admin
     path("admin/", admin.site.urls),
 
+    # APIs públicas
     path("api/", include(public_router.urls)),
+
+    # APIs administrativas
     path("api/admin/", include(admin_router.urls)),
 
-    # IMPORTANTE: schema JSON separado
+    # Schema JSON (importante para Swagger e Redoc)
     path(
         "swagger.json",
         schema_view.without_ui(cache_timeout=0),
         name="schema-json"
     ),
 
+    # Swagger UI
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),
         name="swagger-ui"
     ),
 
+    # ReDoc UI
     path(
         "redoc/",
         schema_view.with_ui("redoc", cache_timeout=0),

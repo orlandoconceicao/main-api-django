@@ -1,10 +1,16 @@
 from decimal import Decimal, ROUND_HALF_UP
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.core.validators import MaxLengthValidator, MinValueValidator, MaxValueValidator
-from django.contrib.auth.base_user import BaseUserManager
 
-# BASE MODEL (timestamps)
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.base_user import BaseUserManager
+from django.core.validators import (
+    MaxLengthValidator,
+    MinValueValidator,
+    MaxValueValidator,
+)
+from django.db import models
+
+
+# BASE MODEL
 
 class Base(models.Model):
     criacao = models.DateTimeField(auto_now_add=True)
@@ -42,7 +48,7 @@ class UsuarioManager(BaseUserManager):
         return self.create_user(email, username, password, **extra_fields)
 
 
-# USER CUSTOM (FIXADO)
+# USER CUSTOM
 
 class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
@@ -60,14 +66,16 @@ class Usuario(AbstractUser):
 
 class Curso(Base):
     nome = models.CharField(max_length=120)
-    descricao = models.TextField(validators=[MaxLengthValidator(500)])
+    descricao = models.TextField(
+        validators=[MaxLengthValidator(500)]
+    )
 
     preco = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         validators=[
             MinValueValidator(Decimal("0.00")),
-            MaxValueValidator(Decimal("999.00"))
+            MaxValueValidator(Decimal("999.00")),
         ]
     )
 
@@ -109,23 +117,24 @@ class Avaliacao(Base):
         decimal_places=2,
         validators=[
             MinValueValidator(Decimal("1.00")),
-            MaxValueValidator(Decimal("5.00"))
+            MaxValueValidator(Decimal("5.00")),
         ]
     )
 
     comentario = models.TextField(
-        validators=[MaxLengthValidator(500)],
-        blank=True
+        blank=True,
+        validators=[MaxLengthValidator(500)]
     )
 
     def __str__(self):
-        return f"{self.usuario.username} → {self.curso.nome}"
+        return f"{self.usuario.username} - {self.curso.nome}"
 
 
 # STATUS COMPRA
 
 class CompraStatus(models.TextChoices):
     PENDING = "pending", "Pendente"
+    PENDING_REFUND = "pending_refund", "Reembolso Pendente"
     COMPLETED = "completed", "Concluído"
     REFUNDED = "refunded", "Reembolsado"
 
@@ -151,14 +160,13 @@ class Compra(Base):
     )
 
     status = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=CompraStatus.choices,
         default=CompraStatus.PENDING
     )
 
     def save(self, *args, **kwargs):
-        # pega preço do curso automaticamente
-        if not self.preco:
+        if self.preco is None:
             self.preco = self.curso.preco
 
         self.preco = Decimal(self.preco).quantize(
@@ -172,10 +180,9 @@ class Compra(Base):
         return f"{self.usuario.username} - {self.curso.nome}"
 
 
-# AUDITORIA (LOG)
+# AUDITORIA
 
 class Auditoria(models.Model):
-
     ACAO_CHOICES = (
         ("CREATE", "Create"),
         ("UPDATE", "Update"),
@@ -189,12 +196,23 @@ class Auditoria(models.Model):
         blank=True
     )
 
-    acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
+    acao = models.CharField(
+        max_length=10,
+        choices=ACAO_CHOICES
+    )
+
     modelo = models.CharField(max_length=100)
     objeto_id = models.IntegerField()
 
-    dados_antes = models.JSONField(null=True, blank=True)
-    dados_depois = models.JSONField(null=True, blank=True)
+    dados_antes = models.JSONField(
+        null=True,
+        blank=True
+    )
+
+    dados_depois = models.JSONField(
+        null=True,
+        blank=True
+    )
 
     criado_em = models.DateTimeField(auto_now_add=True)
 

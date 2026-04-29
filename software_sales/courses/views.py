@@ -1,23 +1,9 @@
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Avg, Count
-from django.db import transaction
-from django.utils import timezone
-from datetime import timedelta
-from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Usuario, Curso, Compra, Avaliacao, CompraStatus
-from .serializers import (
-    UsuarioSerializer,
-    CursoSerializer,
-    AvaliacaoSerializer,
-    CompraSerializer,
-    HistoricoSerializer
-)
-from .filters import CursoFilter, AvaliacaoFilter, CompraFilter
+from .models import Purchase
+from .serializers import PurchaseSerializer
 
 from .tasks import (
     enviar_email_boas_vindas,
@@ -34,410 +20,71 @@ from .tasks import (
 )
 
 
-# RESPONSE PADRÃO
-def response(success=True, data=None, error=None, status_code=status.HTTP_200_OK):
-    return Response({
-        "success": success,
-        "data": data,
-        "error": error
-    }, status=status_code)
+class PurchaseViewSet(viewsets.ModelViewSet):
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer
 
+    def perform_create(self, serializer):
+        compra = serializer.save()
 
-# PERMISSÃO ADMIN
-class IsAdmin(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user and request.user.is_staff
+        email = compra.user.email
+        curso = compra.course.title
 
-
-# USUÁRIO
-class UsuarioViewSet(viewsets.ModelViewSet):
-    queryset = Usuario.objects.all()
-    serializer_class = UsuarioSerializer
-
-    def get_permissions(self):
-        permission_map = {
-            'create': [permissions.AllowAny],
-            'login': [permissions.AllowAny],
-            'comprar': [permissions.IsAuthenticated],
-            'avaliar': [permissions.IsAuthenticated],
-            'reembolso': [permissions.IsAuthenticated],
-            'historico': [permissions.IsAuthenticated],
-        }
-        return [
-            perm()
-            for perm in permission_map.get(
-                self.action,
-                [permissions.IsAuthenticated]
-            )
-        ]
-
-    # Cadastro
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        usuario = serializer.save()
-
-        enviar_email_boas_vindas.delay(usuario.email)
-
-        return response(
-            True,
-            data="Usuário criado com sucesso",
-            status_code=201
-        )
-
-    # Login
-    @action(detail=False, methods=['post'])
-    def login(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-
-        if not username or not password:
-            return response(
-                False,
-                error="Email e senha são obrigatórios",
-                status_code=400
-            )
-
-        user = authenticate(
-            request,
-            username=username,
-            password=password
-        )
-
-        if not user:
-            return response(
-                False,
-                error="Credenciais inválidas",
-                status_code=401
-            )
-
-        refresh = RefreshToken.for_user(user)
-
-        return response(
-            True,
-            data={
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "username": user.username
-                },
-                "refresh": str(refresh),
-                "access": str(refresh.access_token)
-            }
-        )
-
-    # Comprar curso
-    @action(detail=False, methods=['post'])
-    def comprar(self, request):
-        curso_id = request.data.get("curso_id")
-
-        if not curso_id:
-            return response(
-                False,
-                error="curso_id é obrigatório",
-                status_code=400
-            )
-
-        try:
-            curso = Curso.objects.get(
-                id=curso_id,
-                ativo=True
-            )
-        except Curso.DoesNotExist:
-            return response(
-                False,
-                error="Curso não encontrado",
-                status_code=404
-            )
-
-        with transaction.atomic():
-            compra, created = Compra.objects.get_or_create(
-                usuario=request.user,
-                curso=curso,
-                defaults={
-                    "preco": curso.preco,
-                    "status": CompraStatus.COMPLETED
-                }
-            )
-
-            if not created:
-                return response(
-                    False,
-                    error="Curso já foi comprado",
-                    status_code=400
-                )
-
-        enviar_email_compra.delay(
-            request.user.email,
-            curso.nome
-        )
-
-        return response(
-            True,
-            data="Compra realizada com sucesso",
-            status_code=201
-        )
-
-    # Avaliar curso
-    @action(detail=False, methods=['post'])
-    def avaliar(self, request):
-        serializer = AvaliacaoSerializer(
-            data=request.data,
-            context={'request': request}
-        )
-
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return response(
-            True,
-            data="Avaliação salva com sucesso"
-        )
-
-    # Reembolso
-    @action(detail=False, methods=['post'])
-    def reembolso(self, request):
-        compra_id = request.data.get("compra_id")
-
-        if not compra_id:
-            return response(
-                False,
-                error="compra_id é obrigatório",
-                status_code=400
-            )
-
-        try:
-            compra = Compra.objects.get(
-                id=compra_id,
-                usuario=request.user
-            )
-        except Compra.DoesNotExist:
-            return response(
-                False,
-                error="Compra não encontrada",
-                status_code=404
-            )
-
-        if compra.status != CompraStatus.COMPLETED:
-            return response(
-                False,
-                error="Compra não elegível",
-                status_code=400
-            )
-
-        if timezone.now() > compra.criacao + timedelta(days=7):
-            return response(
-                False,
-                error="Prazo expirado",
-                status_code=400
-            )
-
-        compra.status = CompraStatus.PENDING_REFUND
-        compra.save(update_fields=['status'])
-
-        processar_reembolso.delay(
-            request.user.email,
-            compra.curso.nome
-        )
-
-        return response(
-            True,
-            data="Reembolso realizado com sucesso"
-        )
-
-    # Histórico
-    @action(detail=False, methods=['get'])
-    def historico(self, request):
-        compras = Compra.objects.filter(
-            usuario=request.user
-        ).select_related('curso')
-
-        avaliacoes = Avaliacao.objects.filter(
-            usuario=request.user
-        ).select_related('curso')
-
-        eventos = []
-
-        for compra in compras:
-            eventos.append({
-                "tipo": "compra",
-                "curso": compra.curso.nome,
-                "preco": str(compra.preco),
-                "status": compra.status,
-                "data": compra.criacao
-            })
-
-            if compra.status == CompraStatus.REFUNDED:
-                eventos.append({
-                    "tipo": "reembolso",
-                    "curso": compra.curso.nome,
-                    "preco": str(compra.preco),
-                    "status": compra.status,
-                    "data": compra.atualizacao
-                })
-
-        for avaliacao in avaliacoes:
-            eventos.append({
-                "tipo": "avaliacao",
-                "curso": avaliacao.curso.nome,
-                "nota": float(avaliacao.nota),
-                "data": avaliacao.criacao
-            })
-
-        eventos.sort(
-            key=lambda x: x["data"],
-            reverse=True
-        )
-
-        page = self.paginate_queryset(eventos)
-
-        if page is not None:
-            serializer = HistoricoSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = HistoricoSerializer(eventos, many=True)
-
-        return response(
-            True,
-            data=serializer.data
-        )
-
-
-# ADMIN CURSOS
-class AdminCursoViewSet(viewsets.ModelViewSet):
-    queryset = Curso.objects.all().annotate(
-        total_avaliacoes=Count("avaliacoes"),
-        media_avaliacoes_calc=Avg("avaliacoes__nota")
-    )
-    serializer_class = CursoSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdmin]
-
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.OrderingFilter
-    ]
-
-    ordering_fields = [
-        "preco",
-        "criacao",
-        "total_vendas",
-        "media_avaliacoes_calc",
-        "total_avaliacoes",
-        "nome",
-    ]
-
-    ordering = ["-criacao"]
-
-
-# ADMIN AVALIAÇÕES
-class AdminAvaliacaoViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Avaliacao.objects.all()
-    serializer_class = AvaliacaoSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdmin]
-
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.OrderingFilter
-    ]
-
-    ordering_fields = [
-        "nota",
-        "criacao"
-    ]
-
-    ordering = ["-criacao"]
-
-
-# ADMIN COMPRAS
-class AdminCompraViewSet(viewsets.ModelViewSet):
-    queryset = Compra.objects.all()
-    serializer_class = CompraSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdmin]
-    filterset_class = CompraFilter
-
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.OrderingFilter
-    ]
-
-    ordering_fields = [
-        "preco",
-        "criacao",
-        "status"
-    ]
-
-    ordering = ["-criacao"]
+        enviar_email_compra(email, curso)
+        enviar_email_nota_fiscal(email, curso)
 
     @action(detail=True, methods=["post"])
-    def rejeitar_reembolso(self, request, pk=None):
+    def aprovar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
-        if compra.status != CompraStatus.PENDING_REFUND:
-            return response(
-                False,
-                error="Reembolso não está pendente",
-                status_code=400
-            )
+        email = compra.user.email
+        curso = compra.course.title
 
-        compra.status = CompraStatus.COMPLETED
-        compra.save(update_fields=["status"])
+        enviar_email_reembolso_aprovado(email, curso)
 
-        return response(
-            True,
-            data="Reembolso rejeitado com sucesso"
+        return Response(
+            {"message": "Reembolso aprovado e e-mail enviado."},
+            status=status.HTTP_200_OK
         )
 
+    @action(detail=True, methods=["post"])
+    def recusar_reembolso(self, request, pk=None):
+        compra = self.get_object()
 
-# CURSOS PÚBLICOS
-class CursoViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Curso.objects.filter(
-        ativo=True
-    ).annotate(
-        total_avaliacoes=Count("avaliacoes"),
-        media_avaliacoes_calc=Avg("avaliacoes__nota")
-    )
+        email = compra.user.email
+        curso = compra.course.title
 
-    serializer_class = CursoSerializer
-    permission_classes = [permissions.AllowAny]
-    filterset_class = CursoFilter
+        enviar_email_reembolso_recusado(email, curso)
 
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.OrderingFilter
-    ]
+        return Response(
+            {"message": "Reembolso recusado e e-mail enviado."},
+            status=status.HTTP_200_OK
+        )
 
-    ordering_fields = [
-        "preco",
-        "criacao",
-        "total_vendas",
-        "total_avaliacoes",
-        "media_avaliacoes_calc",
-        "nome"
-    ]
+    @action(detail=True, methods=["post"])
+    def solicitar_reembolso(self, request, pk=None):
+        compra = self.get_object()
 
-    ordering = ["-criacao"]
+        email = compra.user.email
+        curso = compra.course.title
 
+        processar_reembolso(email, curso)
 
-# AVALIAÇÕES PÚBLICAS
-class AvaliacaoViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Avaliacao.objects.select_related(
-        "usuario",
-        "curso"
-    )
+        return Response(
+            {"message": "Solicitação de reembolso enviada."},
+            status=status.HTTP_200_OK
+        )
 
-    serializer_class = AvaliacaoSerializer
-    permission_classes = [permissions.AllowAny]
-    filterset_class = AvaliacaoFilter
+    @action(detail=True, methods=["post"])
+    def liberar_certificado(self, request, pk=None):
+        compra = self.get_object()
 
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.OrderingFilter
-    ]
+        email = compra.user.email
+        curso = compra.course.title
 
-    ordering_fields = [
-        "nota",
-        "criacao"
-    ]
+        enviar_email_certificado(email, curso)
 
-    ordering = ["-criacao"]
+        return Response(
+            {"message": "Certificado liberado e e-mail enviado."},
+            status=status.HTTP_200_OK
+        )

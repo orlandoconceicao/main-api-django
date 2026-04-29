@@ -9,42 +9,37 @@ from drf_yasg import openapi
 from courses.urls import public_router, admin_router
 
 
-# SWAGGER
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
         default_version="v1",
-        description="Documentação da API",
+        description="API Docs",
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
 )
 
 
-# HOME
 def home(request):
     return JsonResponse({
         "status": "API rodando",
-        "docs": "/swagger/",
+        "swagger": "/swagger/",
         "admin": "/admin/",
         "api": "/api/"
     })
 
 
-# URLS
 urlpatterns = [
     path("", home),
 
     path("admin/", admin.site.urls),
 
-    # API
     path("api/", include(public_router.urls)),
     path("api/admin/", include(admin_router.urls)),
 
-    # AUTH (evita erro de login se alguém tentar acessar)
+    # REMOVE DEPENDÊNCIA DE LOGIN
     path("accounts/", include("django.contrib.auth.urls")),
 
-    # SWAGGER
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),

@@ -8,7 +8,7 @@ from courses.urls import public_router, admin_router
 # ROTA PRINCIPAL (HOME DA API)
 def home(request):
     return JsonResponse({
-        "status": "API rodando 🚀",
+        "status": "API rodando",
         "docs": "/swagger/",
         "admin": "/admin/",
         "api": "/api/"

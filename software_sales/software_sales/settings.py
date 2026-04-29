@@ -6,6 +6,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # SECURITY
 SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
 
@@ -16,6 +17,7 @@ ALLOWED_HOSTS = config(
     default="127.0.0.1,localhost,.onrender.com",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
+
 
 # APPS
 INSTALLED_APPS = [
@@ -36,6 +38,7 @@ INSTALLED_APPS = [
     "courses",
 ]
 
+
 # MIDDLEWARE
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -51,11 +54,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
 ROOT_URLCONF = "software_sales.urls"
 
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
-# DATABASE (Render)
+
+# DATABASE (RENDER)
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL"),
@@ -63,6 +68,7 @@ DATABASES = {
         ssl_require=True
     )
 }
+
 
 # TEMPLATES
 TEMPLATES = [
@@ -80,33 +86,47 @@ TEMPLATES = [
     },
 ]
 
-# STATIC
+
+# STATIC FILES (FIX RENDER + SWAGGER)
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 STATICFILES_DIRS = []
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_FINDERS = [
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+]
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_USE_FINDERS = True
+
+
+# DEFAULT
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 
 # CUSTOM USER
 AUTH_USER_MODEL = "courses.Usuario"
 
-# CORS (produção)
+
+# CORS (DEV/PROD OK)
 CORS_ALLOW_ALL_ORIGINS = True
 
-# DRF (PRODUÇÃO LIMPA + JWT)
+
+# DRF (IMPORTANTE PRA SWAGGER NÃO QUEBRAR)
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",  # 🔥 essencial pro Swagger
     ),
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
     ),
 }
+
 
 # JWT
 SIMPLE_JWT = {
@@ -114,9 +134,11 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-# SWAGGER (CORREÇÃO DO SEU ERRO)
+
+# SWAGGER (DRF-YASG FIX)
 SWAGGER_SETTINGS = {
-    "USE_SESSION_AUTH": False,  # ISSO REMOVE /accounts/login/
+    "USE_SESSION_AUTH": False,
+    "VALIDATOR_URL": None,
     "SECURITY_DEFINITIONS": {
         "Bearer": {
             "type": "apiKey",
@@ -126,5 +148,7 @@ SWAGGER_SETTINGS = {
     }
 }
 
+
+# RENDER HTTPS FIX
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True

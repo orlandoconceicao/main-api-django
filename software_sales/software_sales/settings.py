@@ -2,13 +2,13 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import dj_database_url
-import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # CORE
-SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
+SECRET_KEY = config("SECRET_KEY", default="unsafe-key")
+
 DEBUG = config("DEBUG", default=True, cast=bool)
 
 ALLOWED_HOSTS = config(
@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "jazzmin",
 
-    # app
+    # apps
     "courses",
 ]
 
@@ -52,8 +52,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
-    "courses.middleware.AuditoriaMiddleware",
 ]
 
 
@@ -61,12 +59,12 @@ ROOT_URLCONF = "software_sales.urls"
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
 
-# DATABASE (CORRIGIDO)
+# DATABASE (POSTGRES SAFE)
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
+        default=config("DATABASE_URL", default=""),
         conn_max_age=600,
-        ssl_require=False  # <- FIX PRINCIPAL DO ERRO DO RENDER/LOCAL
+        ssl_require=False  # 👈 importante para evitar erro SSL no local
     )
 }
 
@@ -92,21 +90,20 @@ TEMPLATES = [
 ]
 
 
-# STATIC
+# STATIC FILES (RENDER FIX)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_DIRS = []
 
 
 # CORS
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://seu-frontend.vercel.app",
 ]
 
 
-# REST FRAMEWORK
+# DRF (IMPORTANTE)
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -125,11 +122,10 @@ SIMPLE_JWT = {
 }
 
 
-# LANGUAGE / TIME
+# LANG / TIME
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
-
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

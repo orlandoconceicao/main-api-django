@@ -9,54 +9,51 @@ from drf_yasg import openapi
 from courses.urls import public_router, admin_router
 
 
-# SWAGGER CONFIG (SEM SESSION LOGIN)
+# SWAGGER
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
-        default_version='v1',
+        default_version="v1",
         description="Documentação da API",
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=[permissions.AllowAny],
 )
 
 
-# HOME API
+# HOME
 def home(request):
     return JsonResponse({
         "status": "API rodando",
         "docs": "/swagger/",
-        "redoc": "/redoc/",
         "admin": "/admin/",
         "api": "/api/"
     })
 
 
-# URLS PRINCIPAIS DO PROJETO
+# URLS
 urlpatterns = [
-    # HOME
-    path('', home),
+    path("", home),
 
-    # ADMIN DJANGO
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
 
-    # API PUBLICA
-    path('api/', include(public_router.urls)),
+    # API
+    path("api/", include(public_router.urls)),
+    path("api/admin/", include(admin_router.urls)),
 
-    # API ADMIN
-    path('api/admin/', include(admin_router.urls)),
+    # AUTH (evita erro de login se alguém tentar acessar)
+    path("accounts/", include("django.contrib.auth.urls")),
 
-    # SWAGGER (FORÇADO SEM LOGIN DE SESSÃO)
+    # SWAGGER
     path(
-        'swagger/',
-        schema_view.with_ui('swagger', cache_timeout=0),
-        name='swagger-ui'
+        "swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="swagger-ui"
     ),
 
-    # REDOC
     path(
-        'redoc/',
-        schema_view.with_ui('redoc', cache_timeout=0),
-        name='redoc'
+        "redoc/",
+        schema_view.with_ui("redoc", cache_timeout=0),
+        name="redoc"
     ),
 ]

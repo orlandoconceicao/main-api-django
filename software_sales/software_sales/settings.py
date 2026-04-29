@@ -2,11 +2,14 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import dj_database_url
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # CORE
+
 SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
+
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
@@ -16,6 +19,7 @@ ALLOWED_HOSTS = config(
 )
 
 # APPS
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -33,7 +37,8 @@ INSTALLED_APPS = [
     "courses.apps.CoursesConfig",
 ]
 
-# MIDDLEWARE (SEGURO)
+# MIDDLEWARE
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -50,10 +55,13 @@ MIDDLEWARE = [
     "courses.middleware.AuditoriaMiddleware",
 ]
 
+# URL / WSGI
+
 ROOT_URLCONF = "software_sales.urls"
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
-# DATABASE (PROD SAFE)
+# DATABASE
+
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
@@ -61,11 +69,19 @@ DATABASES = {
     )
 }
 
-# STATIC
+# STATIC FILES (Render OK)
+
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# REST
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# REST FRAMEWORK
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -76,18 +92,23 @@ REST_FRAMEWORK = {
 }
 
 # JWT
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-# CELERY (SEM RISCO NO RENDER)
-CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="")
-CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="")
+# CELERY
 
-# PRODUCTION SAFETY
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379/0")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379/0")
+
+# SAFETY PROD
+
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

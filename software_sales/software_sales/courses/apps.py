@@ -6,4 +6,4 @@ class CoursesConfig(AppConfig):
     name = 'courses'
 
     def ready(self):
-        import courses.signals
+        import software_sales.software_sales.courses.signals

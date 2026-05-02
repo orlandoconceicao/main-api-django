@@ -6,7 +6,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-from courses.urls import public_router, admin_router
+from software_sales.software_sales.courses.urls import public_router, admin_router
 
 
 # Swagger / OpenAPI

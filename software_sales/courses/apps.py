@@ -4,9 +4,5 @@ class CoursesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'courses'
 
-class CoursesConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'core.courses'
-
     def ready(self):
         import courses.signals

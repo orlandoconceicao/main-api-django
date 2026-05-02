@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "drf_yasg",
 
     "courses",  # se app está na raiz
+    "core",
 ]
 
 

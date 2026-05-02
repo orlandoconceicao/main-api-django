@@ -2,6 +2,11 @@
 import os
 import sys
 
+import os
+print("ROOT DIR:", os.getcwd())
+print("FILES:", os.listdir("."))
+print("SOFTWARE:", os.listdir("software_sales") if os.path.exists("software_sales") else "NOT FOUND")
+
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'software_sales.settings')
     try:

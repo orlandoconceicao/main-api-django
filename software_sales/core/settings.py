@@ -59,7 +59,7 @@ WSGI_APPLICATION = "software_sales.core.wsgi.application"
 ASGI_APPLICATION = "software_sales.core.asgi.application"
 
 
-# DATABASE
+# DATABASE (RENDER POSTGRES)
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL"),
@@ -89,14 +89,15 @@ TEMPLATES = [
 # STATIC
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # DEFAULT
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = "courses.Usuario"
+
+# USER MODEL (CORRIGIDO)
+AUTH_USER_MODEL = "software_sales.courses.Usuario"
 
 
 # CORS
@@ -131,7 +132,7 @@ SWAGGER_SETTINGS = {
 }
 
 
-# EMAIL
+# EMAIL (GMAIL SMTP)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587

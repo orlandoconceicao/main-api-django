@@ -2,19 +2,19 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Purchase
-from .serializers import PurchaseSerializer
+from .models import Compra
+from .serializers import CompraSerializer
 
 
-class PurchaseViewSet(viewsets.ModelViewSet):
-    queryset = Purchase.objects.all()
-    serializer_class = PurchaseSerializer
+class CompraViewSet(viewsets.ModelViewSet):
+    queryset = Compra.objects.all()
+    serializer_class = CompraSerializer
 
     def perform_create(self, serializer):
         compra = serializer.save()
 
-        email = compra.user.email
-        curso = compra.course.title
+        email = compra.usuario.email
+        curso = compra.curso.nome
 
         # simulando envio de email (sem Celery)
         print(f"Compra confirmada para {email} - curso: {curso}")
@@ -24,8 +24,8 @@ class PurchaseViewSet(viewsets.ModelViewSet):
     def aprovar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
-        email = compra.user.email
-        curso = compra.course.title
+        email = compra.usuario.email
+        curso = compra.curso.nome
 
         print(f"Reembolso aprovado: {email} - {curso}")
 
@@ -38,8 +38,8 @@ class PurchaseViewSet(viewsets.ModelViewSet):
     def recusar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
-        email = compra.user.email
-        curso = compra.course.title
+        email = compra.usuario.email
+        curso = compra.curso.nome
 
         print(f"Reembolso recusado: {email} - {curso}")
 
@@ -52,8 +52,8 @@ class PurchaseViewSet(viewsets.ModelViewSet):
     def solicitar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
-        email = compra.user.email
-        curso = compra.course.title
+        email = compra.usuario.email
+        curso = compra.curso.nome
 
         print(f"Solicitação de reembolso: {email} - {curso}")
 
@@ -66,8 +66,8 @@ class PurchaseViewSet(viewsets.ModelViewSet):
     def liberar_certificado(self, request, pk=None):
         compra = self.get_object()
 
-        email = compra.user.email
-        curso = compra.course.title
+        email = compra.usuario.email
+        curso = compra.curso.nome
 
         print(f"Certificado liberado: {email} - {curso}")
 

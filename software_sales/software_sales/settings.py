@@ -2,24 +2,25 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import dj_database_url
-import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY
-SECRET_KEY = config("SECRET_KEY", default="unsafe-dev-key")
+
+SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    default="127.0.0.1,localhost,.onrender.com",
+    default="127.0.0.1,localhost,.onrender.com,main-api-django-tu0m.onrender.com",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
 
 # APPS
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -28,18 +29,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # libs
     "rest_framework",
     "corsheaders",
     "django_filters",
     "drf_yasg",
 
-    # apps
     "courses",
 ]
 
 
 # MIDDLEWARE
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -56,11 +56,11 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = "software_sales.urls"
-
 WSGI_APPLICATION = "software_sales.wsgi.application"
 
 
 # DATABASE (RENDER)
+
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL"),
@@ -71,6 +71,7 @@ DATABASES = {
 
 
 # TEMPLATES
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -87,40 +88,37 @@ TEMPLATES = [
 ]
 
 
-# STATIC FILES (FIX RENDER + SWAGGER)
+# STATIC
+
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_DIRS = []
-
-STATICFILES_FINDERS = [
-    "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-]
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-WHITENOISE_USE_FINDERS = True
 
 
 # DEFAULT
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# CUSTOM USER
+# USER
+
 AUTH_USER_MODEL = "courses.Usuario"
 
 
-# CORS (DEV/PROD OK)
+# CORS
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-# DRF (IMPORTANTE PRA SWAGGER NÃO QUEBRAR)
+# DRF
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.AllowAny",  # 🔥 essencial pro Swagger
+        "rest_framework.permissions.AllowAny",
     ),
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -129,13 +127,15 @@ REST_FRAMEWORK = {
 
 
 # JWT
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 
-# SWAGGER (DRF-YASG FIX)
+# SWAGGER
+
 SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": False,
     "VALIDATOR_URL": None,
@@ -149,6 +149,23 @@ SWAGGER_SETTINGS = {
 }
 
 
-# RENDER HTTPS FIX
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# EMAIL (ESSENCIAL)
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
+
+
+# RENDER FIX
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://main-api-django-tu0m.onrender.com"
+]

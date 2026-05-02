@@ -48,7 +48,7 @@ class UsuarioManager(BaseUserManager):
         return self.create_user(email, username, password, **extra_fields)
 
 
-# USER CUSTOM
+# USER
 
 class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
@@ -130,7 +130,7 @@ class Avaliacao(Base):
         return f"{self.usuario.username} - {self.curso.nome}"
 
 
-# STATUS COMPRA
+# COMPRA STATUS
 
 class CompraStatus(models.TextChoices):
     PENDING = "pending", "Pendente"
@@ -139,7 +139,7 @@ class CompraStatus(models.TextChoices):
     REFUNDED = "refunded", "Reembolsado"
 
 
-# COMPRA
+# COMPRA (ANTES ERA PURCHASE)
 
 class Compra(Base):
     usuario = models.ForeignKey(

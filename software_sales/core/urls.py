@@ -5,8 +5,7 @@ from django.http import JsonResponse
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-
-from software_sales.software_sales.courses.urls import public_router, admin_router
+from courses.urls import public_router, admin_router
 
 
 # Swagger / OpenAPI
@@ -37,24 +36,15 @@ def home(request):
 
 
 urlpatterns = [
-    # Home
     path("", home),
-
-    # Django Admin
     path("admin/", admin.site.urls),
 
-    # APIs públicas
     path("api/", include(public_router.urls)),
-
-    # APIs administrativas
     path("api/admin/", include(admin_router.urls)),
 
-    # Schema JSON (importante para Swagger e Redoc)
-    path(
-        "swagger.json",
-        schema_view.without_ui(cache_timeout=0),
-        name="schema-json"
-    ),
+    path("swagger.json", schema_view.without_ui(cache_timeout=0), name="schema-json"),
+    path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc"),
 
     # Swagger UI
     path(

@@ -56,7 +56,7 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = "software_sales.urls"
-WSGI_APPLICATION = "software_sales.wsgi.application"
+WSGI_APPLICATION = "core.wsgi.application"
 
 
 # DATABASE (RENDER)

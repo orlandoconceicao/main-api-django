@@ -32,8 +32,8 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_yasg",
 
-    "software_sales.core",
-    "software_sales.courses",
+    "software_sales.core.apps.CoreConfig",
+    "software_sales.courses.apps.CoursesConfig",
 ]
 
 

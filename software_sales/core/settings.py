@@ -5,8 +5,6 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DJANGO_SETTINGS_MODULE = "software_sales.core.settings"
-
 # SECURITY
 SECRET_KEY = config("SECRET_KEY")
 

@@ -5,13 +5,14 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # SECURITY
 SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",    
+    "ALLOWED_HOSTS",
     default="127.0.0.1,localhost,.onrender.com",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
@@ -31,8 +32,8 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_yasg",
 
-    "courses",  # se app está na raiz
-    "core",
+    "software_sales.core",
+    "software_sales.courses",
 ]
 
 
@@ -52,9 +53,10 @@ MIDDLEWARE = [
 ]
 
 
-# CORE DO PROJETO
-ROOT_URLCONF = "core.urls"
-WSGI_APPLICATION = "core.wsgi.application"
+# ROOT PROJECT
+ROOT_URLCONF = "software_sales.core.urls"
+WSGI_APPLICATION = "software_sales.core.wsgi.application"
+ASGI_APPLICATION = "software_sales.core.asgi.application"
 
 
 # DATABASE
@@ -94,8 +96,6 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # DEFAULT
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
-# AUTH
 AUTH_USER_MODEL = "courses.Usuario"
 
 
@@ -147,5 +147,5 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://main-api-django-tu0m.onrender.com"
+    "https://software-sales.onrender.com",
 ]

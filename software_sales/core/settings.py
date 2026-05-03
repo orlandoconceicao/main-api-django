@@ -14,7 +14,7 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    default="127.0.0.1,localhost,.onrender.com",
+    default=".onrender.com,localhost,127.0.0.1",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
@@ -54,13 +54,13 @@ MIDDLEWARE = [
 ]
 
 
-# ROOT PROJECT
+# ROOT
 ROOT_URLCONF = "software_sales.core.urls"
 WSGI_APPLICATION = "software_sales.core.wsgi.application"
 ASGI_APPLICATION = "software_sales.core.asgi.application"
 
 
-# DATABASE (RENDER POSTGRES)
+# DATABASE (RENDER)
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL"),
@@ -133,7 +133,7 @@ SWAGGER_SETTINGS = {
 }
 
 
-# EMAIL (GMAIL SMTP)
+# EMAIL
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587

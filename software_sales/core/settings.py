@@ -97,7 +97,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # USER MODEL (CORRIGIDO)
-AUTH_USER_MODEL = "software_sales.courses.Usuario"
+AUTH_USER_MODEL = "courses.Usuario"
 
 
 # CORS

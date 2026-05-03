@@ -139,7 +139,7 @@ class CompraStatus(models.TextChoices):
     REFUNDED = "refunded", "Reembolsado"
 
 
-# COMPRA (ANTES ERA PURCHASE)
+# COMPRA
 
 class Compra(Base):
     usuario = models.ForeignKey(

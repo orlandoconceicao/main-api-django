@@ -1,14 +1,15 @@
 #!/bin/sh
 
-echo "Esperando banco..."
+echo "Iniciando..."
+
 sleep 5
 
-echo "Rodando migrate..."
+echo "Migrando..."
 python manage.py migrate --noinput
 
-echo "Rodando collectstatic..."
+echo "Static..."
 python manage.py collectstatic --noinput
 
-echo "Iniciando servidor..."
+echo "Run server..."
 
-gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
+gunicorn software_sales.core.wsgi:application --bind 0.0.0.0:$PORT

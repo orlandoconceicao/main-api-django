@@ -1,8 +1,11 @@
 from pathlib import Path
 from datetime import timedelta
-from decouple import config
+from decouple import AutoConfig
 import dj_database_url
 import os
+
+# NÃO LÊ .env LOCAL
+config = AutoConfig(search_path=None)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -60,10 +63,9 @@ WSGI_APPLICATION = "software_sales.core.wsgi.application"
 ASGI_APPLICATION = "software_sales.core.asgi.application"
 
 
-# DATABASE (RENDER)
+# DATABASE (SÓ RENDER)
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL"),
         conn_max_age=600,
         ssl_require=True
     )
@@ -139,9 +141,9 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
+EMAIL_HOST_USER = ""
+EMAIL_HOST_PASSWORD = ""
+DEFAULT_FROM_EMAIL = ""
 
 
 # RENDER FIX

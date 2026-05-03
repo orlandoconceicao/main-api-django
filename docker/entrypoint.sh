@@ -1,20 +1,14 @@
 #!/bin/sh
-set -e
 
-echo "=== STARTING APP ==="
+echo "Esperando banco..."
+sleep 5
 
-echo "Rodando migrations..."
+echo "Rodando migrate..."
 python manage.py migrate --noinput
 
-echo "Coletando static..."
+echo "Rodando collectstatic..."
 python manage.py collectstatic --noinput
 
-echo "Verificando Django..."
-python manage.py check --deploy
+echo "Iniciando servidor..."
 
-echo "Iniciando Gunicorn..."
-
-exec gunicorn software_sales.wsgi:application \
-  --bind 0.0.0.0:$PORT \
-  --workers 3 \
-  --timeout 120
+gunicorn core.wsgi:application --bind 0.0.0.0:$PORT

@@ -4,6 +4,7 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
 
 RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
 
@@ -15,6 +16,7 @@ RUN pip install -r requirements.txt
 COPY . .
 
 RUN chmod +x /app/docker/entrypoint.sh
-RUN chmod +x /app/docker/entrypoint-celery.sh
 
-WORKDIR /app/software_sales
+EXPOSE 8000
+
+CMD ["sh", "/app/docker/entrypoint.sh"]

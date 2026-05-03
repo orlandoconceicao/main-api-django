@@ -8,9 +8,9 @@ from .views import (
 
 router = DefaultRouter()
 
-router.register(r'usuarios', UsuarioViewSet, basename='usuarios')
-router.register(r'cursos', CursoViewSet, basename='cursos')
-router.register(r'avaliacoes', AvaliacaoViewSet, basename='avaliacoes')
-router.register(r'compras', CompraViewSet, basename='compras')
+router.register(r'usuarios', UsuarioViewSet)
+router.register(r'cursos', CursoViewSet)
+router.register(r'avaliacoes', AvaliacaoViewSet)
+router.register(r'compras', CompraViewSet)
 
 urlpatterns = router.urls

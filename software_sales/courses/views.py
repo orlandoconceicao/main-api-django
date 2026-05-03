@@ -1,77 +1,125 @@
+from decimal import Decimal
+from django.db.models import Avg
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import Compra
-from .serializers import CompraSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .models import (
+    Compra,
+    Curso,
+    Usuario,
+    Avaliacao,
+    CompraStatus
+)
+
+from .serializers import (
+    CompraSerializer,
+    CursoSerializer,
+    UsuarioSerializer,
+    AvaliacaoSerializer
+)
 
 
-class CompraViewSet(viewsets.ModelViewSet):
-    queryset = Compra.objects.all()
-    serializer_class = CompraSerializer
+# USUARIO
+class UsuarioViewSet(viewsets.ModelViewSet):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+
+# CURSO
+class CursoViewSet(viewsets.ModelViewSet):
+    queryset = Curso.objects.select_related("criado_por").all()
+    serializer_class = CursoSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["criado_por"]
+
+    permission_classes = [AllowAny]
+
+
+# AVALIACAO
+class AvaliacaoViewSet(viewsets.ModelViewSet):
+    queryset = Avaliacao.objects.select_related("usuario", "curso").all()
+    serializer_class = AvaliacaoSerializer
+
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        compra = serializer.save()
+        avaliacao = serializer.save(usuario=self.request.user)
 
-        email = compra.usuario.email
-        curso = compra.curso.nome
+        curso = avaliacao.curso
 
-        # simulando envio de email (sem Celery)
-        print(f"Compra confirmada para {email} - curso: {curso}")
-        print(f"Nota fiscal enviada para {email} - curso: {curso}")
+        media = curso.avaliacoes.aggregate(
+            media=Avg("nota")
+        )["media"] or Decimal("0.00")
 
-    @action(detail=True, methods=["post"])
-    def aprovar_reembolso(self, request, pk=None):
-        compra = self.get_object()
+        curso.media_avaliacoes = round(media, 2)
+        curso.save()
 
-        email = compra.usuario.email
-        curso = compra.curso.nome
 
-        print(f"Reembolso aprovado: {email} - {curso}")
+# COMPRA
+class CompraViewSet(viewsets.ModelViewSet):
+    queryset = Compra.objects.select_related("usuario", "curso").all()
+    serializer_class = CompraSerializer
 
-        return Response(
-            {"message": "Reembolso aprovado e processado."},
-            status=status.HTTP_200_OK
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(usuario=self.request.user)
+
+    def perform_create(self, serializer):
+        compra = serializer.save(
+            usuario=self.request.user,
+            status=CompraStatus.COMPLETED
         )
 
-    @action(detail=True, methods=["post"])
-    def recusar_reembolso(self, request, pk=None):
-        compra = self.get_object()
+        curso = compra.curso
+        curso.total_vendas += 1
+        curso.save()
 
-        email = compra.usuario.email
-        curso = compra.curso.nome
 
-        print(f"Reembolso recusado: {email} - {curso}")
+    # ACTIONS
 
-        return Response(
-            {"message": "Reembolso recusado."},
-            status=status.HTTP_200_OK
-        )
 
     @action(detail=True, methods=["post"])
     def solicitar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
-        email = compra.usuario.email
-        curso = compra.curso.nome
+        if compra.status != CompraStatus.COMPLETED:
+            return Response({"error": "Não permitido"}, status=400)
 
-        print(f"Solicitação de reembolso: {email} - {curso}")
+        compra.status = CompraStatus.PENDING_REFUND
+        compra.save()
 
-        return Response(
-            {"message": "Solicitação de reembolso enviada."},
-            status=status.HTTP_200_OK
-        )
+        return Response({"message": "Solicitação enviada"})
+
+    @action(detail=True, methods=["post"])
+    def aprovar_reembolso(self, request, pk=None):
+        compra = self.get_object()
+
+        compra.status = CompraStatus.REFUNDED
+        compra.save()
+
+        return Response({"message": "Reembolso aprovado"})
+
+    @action(detail=True, methods=["post"])
+    def recusar_reembolso(self, request, pk=None):
+        compra = self.get_object()
+
+        compra.status = CompraStatus.COMPLETED
+        compra.save()
+
+        return Response({"message": "Reembolso recusado"})
 
     @action(detail=True, methods=["post"])
     def liberar_certificado(self, request, pk=None):
-        compra = self.get_object()
-
-        email = compra.usuario.email
-        curso = compra.curso.nome
-
-        print(f"Certificado liberado: {email} - {curso}")
-
-        return Response(
-            {"message": "Certificado liberado."},
-            status=status.HTTP_200_OK
-        )
+        return Response({"message": "Certificado liberado"})

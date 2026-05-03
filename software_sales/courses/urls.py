@@ -1,18 +1,16 @@
-from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from .views import (
+    UsuarioViewSet,
+    CursoViewSet,
+    AvaliacaoViewSet,
+    CompraViewSet
+)
 
-from .views import CompraViewSet
+router = DefaultRouter()
 
-# ROTAS PÚBLICAS
-public_router = DefaultRouter()
+router.register(r'usuarios', UsuarioViewSet, basename='usuarios')
+router.register(r'cursos', CursoViewSet, basename='cursos')
+router.register(r'avaliacoes', AvaliacaoViewSet, basename='avaliacoes')
+router.register(r'compras', CompraViewSet, basename='compras')
 
-# por enquanto só compras (ajustado ao seu estado atual)
-public_router.register(r'compras', CompraViewSet, basename='compras')
-
-# ROTAS ADMIN (vazio por enquanto)
-admin_router = DefaultRouter()
-
-urlpatterns = [
-    path('', include(public_router.urls)),
-    path('api/admin/', include(admin_router.urls)),
-]
+urlpatterns = router.urls

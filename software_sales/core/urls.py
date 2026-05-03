@@ -25,10 +25,6 @@ urlpatterns = [
 
     path('api/courses/', include('software_sales.courses.urls')),
 
-    # se tiver endpoints no core, mantém
-    path('api/core/', include('software_sales.core.api_urls')),
-
-
     # SWAGGER
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),

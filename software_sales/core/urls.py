@@ -20,8 +20,6 @@ def api_home(request):
             "api": "/api/",
             "swagger": "/swagger/",
             "redoc": "/redoc/",
-            "token": "/token/",
-            "token_refresh": "/token/refresh/"
         }
     })
 

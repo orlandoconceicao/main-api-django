@@ -5,10 +5,25 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+from django.http import JsonResponse
+
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
+def api_home(request):
+    return JsonResponse({
+        "message": "API online",
+        "routes": {
+            "admin": "/admin/",
+            "api": "/api/",
+            "swagger": "/swagger/",
+            "redoc": "/redoc/",
+            "token": "/token/",
+            "token_refresh": "/token/refresh/"
+        }
+    })
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -21,6 +36,8 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('', api_home),
+
     path('admin/', admin.site.urls),
 
     # API

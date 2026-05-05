@@ -12,28 +12,44 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+
 def api_home(request):
     return JsonResponse({
-        "message": "API online",
-        "routes": {
-            "admin": "/admin/",
-            "api": "/api/",
+        "message": "Software Sales API online",
+
+        "docs": {
             "swagger": "/swagger/",
-            "redoc": "/redoc/",
-            "token": "/token/",
-            "token_refresh": "/token/refresh/"
+            "redoc": "/redoc/"
+        },
+
+        "auth": {
+            "token": "/api/token/",
+            "refresh": "/api/token/refresh/",
+            "test_user": {
+                "username": "admin",
+                "password": "Admin@123"
+            }
+        },
+
+        "usage": {
+            "step_1": "POST /api/token/ com username e password",
+            "step_2": "copie o access token",
+            "step_3": "clique em Authorize no Swagger",
+            "step_4": "use: Bearer SEU_TOKEN"
         }
     })
+
 
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
         default_version='v1',
-        description="Documentação da API",
+        description="API de vendas de cursos com autenticação JWT",
     ),
     public=True,
     permission_classes=[permissions.AllowAny],
 )
+
 
 urlpatterns = [
     path('', api_home),

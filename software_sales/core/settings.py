@@ -4,15 +4,14 @@ from decouple import AutoConfig
 import dj_database_url
 import os
 
-# NÃO LÊ .env LOCAL
-config = AutoConfig(search_path=None)
-
+# BASE
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ENV (.env local + render)
+config = AutoConfig(search_path=BASE_DIR)
 
 # SECURITY
 SECRET_KEY = config("SECRET_KEY")
-
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
@@ -20,7 +19,6 @@ ALLOWED_HOSTS = config(
     default=".onrender.com,localhost,127.0.0.1",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
-
 
 # APPS
 INSTALLED_APPS = [
@@ -40,7 +38,6 @@ INSTALLED_APPS = [
     "software_sales.courses.apps.CoursesConfig",
 ]
 
-
 # MIDDLEWARE
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -56,21 +53,18 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
 # ROOT
 ROOT_URLCONF = "software_sales.core.urls"
 WSGI_APPLICATION = "software_sales.core.wsgi.application"
 ASGI_APPLICATION = "software_sales.core.asgi.application"
 
-
-# DATABASE (SÓ RENDER)
+# DATABASE (Render + Local fallback)
 DATABASES = {
     "default": dj_database_url.config(
+        default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
         conn_max_age=600,
-        ssl_require=True
     )
 }
-
 
 # TEMPLATES
 TEMPLATES = [
@@ -88,24 +82,21 @@ TEMPLATES = [
     },
 ]
 
-
 # STATIC
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-
 # DEFAULT
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
-# USER MODEL
+# USER
 AUTH_USER_MODEL = "courses.Usuario"
 
-
-# CORS
-CORS_ALLOW_ALL_ORIGINS = True
-
+# CORS (produção)
+CORS_ALLOWED_ORIGINS = [
+    "https://main-api-django-tu0m.onrender.com",
+]
 
 # DRF
 REST_FRAMEWORK = {
@@ -113,16 +104,14 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
     ),
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
 }
-
 
 # JWT
 SIMPLE_JWT = {
@@ -130,29 +119,38 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-
-# SWAGGER
+# SWAGGER (Authorize funcionando)
 SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": False,
-    "VALIDATOR_URL": None,
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Use: Bearer <seu_token>",
+        }
+    },
+    "SECURITY": [
+        {
+            "Bearer": []
+        }
+    ],
 }
 
-
-# EMAIL
+# EMAIL (opcional)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
-DEFAULT_FROM_EMAIL = ""
-
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
 
 # RENDER FIX
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://software-sales.onrender.com",
+    "https://main-api-django-tu0m.onrender.com",
 ]

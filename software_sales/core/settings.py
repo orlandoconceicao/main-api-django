@@ -7,7 +7,7 @@ import os
 # BASE
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ENV (.env local + render)
+# ENV
 config = AutoConfig(search_path=BASE_DIR)
 
 # SECURITY
@@ -16,7 +16,7 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    default=".onrender.com,localhost,127.0.0.1",
+    default="localhost,127.0.0.1,.onrender.com",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
@@ -58,7 +58,7 @@ ROOT_URLCONF = "software_sales.core.urls"
 WSGI_APPLICATION = "software_sales.core.wsgi.application"
 ASGI_APPLICATION = "software_sales.core.asgi.application"
 
-# DATABASE (Render + Local fallback)
+# DATABASE
 DATABASES = {
     "default": dj_database_url.config(
         default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
@@ -90,13 +90,15 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # DEFAULT
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# USER
+# USER MODEL
 AUTH_USER_MODEL = "courses.Usuario"
 
-# CORS (produção)
-CORS_ALLOWED_ORIGINS = [
-    "https://main-api-django-tu0m.onrender.com",
-]
+# CORS
+CORS_ALLOWED_ORIGINS = config(
+    "CORS_ALLOWED_ORIGINS",
+    default="https://main-api-django-tu0m.onrender.com",
+    cast=lambda v: [s.strip() for s in v.split(",")]
+)
 
 # DRF
 REST_FRAMEWORK = {
@@ -111,6 +113,16 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
+
+    # SEGURANÇA (RATE LIMIT)
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "500/day",
+        "anon": "100/day",
+    },
 }
 
 # JWT
@@ -119,25 +131,22 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-# SWAGGER (Authorize funcionando)
-SWAGGER_SETTINGS = {
-    "USE_SESSION_AUTH": False,
-    "SECURITY_DEFINITIONS": {
-        "Bearer": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header",
-            "description": "Use: Bearer <seu_token>",
-        }
-    },
-    "SECURITY": [
-        {
-            "Bearer": []
-        }
-    ],
-}
+# SWAGGER (SÓ EM DESENVOLVIMENTO)
+if DEBUG:
+    SWAGGER_SETTINGS = {
+        "USE_SESSION_AUTH": False,
+        "SECURITY_DEFINITIONS": {
+            "Bearer": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+                "description": "Use: Bearer <seu_token>",
+            }
+        },
+        "SECURITY": [{"Bearer": []}],
+    }
 
-# EMAIL (opcional)
+# EMAIL
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
@@ -147,10 +156,12 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
 
-# RENDER FIX
+# RENDER / HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://main-api-django-tu0m.onrender.com",
-]
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="https://main-api-django-tu0m.onrender.com",
+    cast=lambda v: [s.strip() for s in v.split(",")]
+)

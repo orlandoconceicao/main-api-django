@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Curso, Avaliacao, Compra, Usuario
 
 
-# INLINES
+# AVALIACAO INLINE
 class AvaliacaoInline(admin.TabularInline):
     model = Avaliacao
     extra = 0
@@ -10,6 +10,7 @@ class AvaliacaoInline(admin.TabularInline):
     can_delete = False
 
 
+# COMPRA INLINE
 class CompraInline(admin.TabularInline):
     model = Compra
     extra = 0
@@ -17,14 +18,7 @@ class CompraInline(admin.TabularInline):
     can_delete = False
 
 
-class CursoInline(admin.TabularInline):
-    model = Curso
-    extra = 0
-    readonly_fields = ("nome", "preco", "ativo", "criacao", "atualizacao")
-    can_delete = False
-
-
-# CURSO ADMIN
+# CURSO
 @admin.register(Curso)
 class CursoAdmin(admin.ModelAdmin):
     list_display = (
@@ -47,7 +41,7 @@ class CursoAdmin(admin.ModelAdmin):
     inlines = [AvaliacaoInline]
 
 
-# AVALIACAO ADMIN
+# AVALIACAO
 @admin.register(Avaliacao)
 class AvaliacaoAdmin(admin.ModelAdmin):
     list_display = (
@@ -62,7 +56,7 @@ class AvaliacaoAdmin(admin.ModelAdmin):
     readonly_fields = ("criacao", "atualizacao")
 
 
-# COMPRA ADMIN
+# COMPRA
 @admin.register(Compra)
 class CompraAdmin(admin.ModelAdmin):
     list_display = (
@@ -77,7 +71,7 @@ class CompraAdmin(admin.ModelAdmin):
     readonly_fields = ("criacao", "atualizacao")
 
 
-# USUARIO ADMIN
+# USUARIO
 @admin.register(Usuario)
 class UsuarioAdmin(admin.ModelAdmin):
     list_display = (
@@ -90,5 +84,3 @@ class UsuarioAdmin(admin.ModelAdmin):
     ordering = ("id",)
 
     readonly_fields = ("id",)
-
-    inlines = [CursoInline, CompraInline]

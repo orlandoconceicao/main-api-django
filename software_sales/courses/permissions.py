@@ -1,52 +1,64 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
+
 from .models import Compra, CompraStatus
 
-# Permissão geral ao ADMIN
+
+# ADMIN OU SOMENTE LEITURA
 class IsAdminOrReadOnly(BasePermission):
+    """
+    Permite leitura para todos.
+    Escrita apenas para admin (is_staff).
+    """
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
-            return True  # libera leitura para qualquer usuário
+            return True
 
-        # só permite escrita se for usuário autenticado e admin (is_staff)
-        return bool(request.user and request.user.is_authenticated and request.user.is_staff)
-
-# Apenas dono pode modificar
-class IsOwner(BasePermission):
-
-    def has_object_permission(self, request, view, obj):
-        # bloqueia se não estiver autenticado
-        if not request.user or not request.user.is_authenticated:
-            return False
-
-        # permite apenas se o usuário for o dono do objeto
-        return obj.usuario == request.user
-
-# Só quem comprou pode avaliar/acessar conteúdo
-class HasPurchasedCourse(BasePermission):
-    message = "Você precisa comprar este curso."  # mensagem padrão de erro
-
-    def has_permission(self, request, view):
-        # garante que o usuário está logado
-        if not request.user or not request.user.is_authenticated:
-            return False
-
-        # tenta obter curso_id de várias fontes (body, query ou URL)
-        curso_id = (
-            request.data.get('curso_id') or
-            request.query_params.get('curso_id') or
-            getattr(view, 'kwargs', {}).get('curso_id') or
-            getattr(view, 'kwargs', {}).get('pk')
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.is_staff
         )
 
-        # se não encontrar o curso_id, bloqueia
+
+# DONO DO OBJETO
+class IsOwner(BasePermission):
+    """
+    Permite acesso apenas ao dono do objeto.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        return obj.usuario == request.user
+
+
+# USUÁRIO COMPRADOR DO CURSO
+class HasPurchasedCourse(BasePermission):
+    """
+    Permite apenas usuários que compraram o curso.
+    """
+
+    message = "Você precisa comprar este curso."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        curso_id = (
+            request.data.get("curso_id")
+            or request.query_params.get("curso_id")
+            or view.kwargs.get("curso_id")
+            or view.kwargs.get("pk")
+        )
+
         if not curso_id:
             self.message = "curso_id não informado."
             return False
 
-        # verifica no banco se o usuário comprou o curso com status COMPLETED
         return Compra.objects.filter(
-            usuario_id=request.user.id,  # usa id para otimizar
+            usuario_id=request.user.id,
             curso_id=curso_id,
             status=CompraStatus.COMPLETED
-        ).only('id').exists()  # consulta leve (só verifica existência)
+        ).exists()

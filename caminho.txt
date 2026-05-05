@@ -437,7 +437,7 @@ docker-compose -f docker-compose.dev.yml up --build
 docker-compose -f docker-compose.prod.yml up --build -d
 
 
-===== Deploy: ===== (x)
+===== Deploy: ===== (✔)
 - Subir aplicação em Railway, Render ou AWS
 - Configurar banco PostgreSQL online
 - Usar variáveis de ambiente (.env)
@@ -458,6 +458,8 @@ docker-compose -f docker-compose.prod.yml up --build -d
 - Passo a passo para rodar
 - Lista de endpoints principais
 - Exemplos de requisição/resposta
+- usuario: admin
+- senha: Admin@123
 
 --------------------------------------------------
 

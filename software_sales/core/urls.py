@@ -13,6 +13,7 @@ from rest_framework_simplejwt.views import (
 )
 
 
+# HOME DA API
 def api_home(request):
     return JsonResponse({
         "message": "Software Sales API online",
@@ -25,21 +26,20 @@ def api_home(request):
         "auth": {
             "token": "/api/token/",
             "refresh": "/api/token/refresh/",
-            "test_user": {
-                "username": "admin",
-                "password": "Admin@123"
-            }
+            "note": "Use um usuário criado no Django admin (/admin/) para autenticação"
         },
 
         "usage": {
-            "step_1": "POST /api/token/ com username e password",
-            "step_2": "copie o access token",
-            "step_3": "clique em Authorize no Swagger",
-            "step_4": "use: Bearer SEU_TOKEN"
+            "step_1": "Acesse /admin/ e use o usuário admin do sistema",
+            "step_2": "Faça login em /api/token/ com username e password",
+            "step_3": "Copie o access token retornado",
+            "step_4": "No Swagger clique em Authorize",
+            "step_5": "Use: Bearer <seu_token>"
         }
     })
 
 
+# SWAGGER CONFIG
 schema_view = get_schema_view(
     openapi.Info(
         title="Software Sales API",
@@ -51,19 +51,17 @@ schema_view = get_schema_view(
 )
 
 
+# URLS
 urlpatterns = [
     path('', api_home),
 
     path('admin/', admin.site.urls),
 
-    # API
     path('api/', include('software_sales.courses.urls')),
 
-    # JWT
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    # Swagger
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0)),
 ]

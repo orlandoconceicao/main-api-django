@@ -1,10 +1,10 @@
 from decimal import Decimal
 from django.db.models import Avg
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -34,6 +34,12 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return [IsAuthenticated()]
 
+    def get_queryset(self):
+        # usuário comum só vê ele mesmo
+        if not self.request.user.is_staff:
+            return Usuario.objects.filter(id=self.request.user.id)
+        return Usuario.objects.all()
+
 
 # CURSO
 class CursoViewSet(viewsets.ModelViewSet):
@@ -43,7 +49,13 @@ class CursoViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["criado_por"]
 
-    permission_classes = [AllowAny]
+    def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(criado_por=self.request.user)
 
 
 # AVALIACAO
@@ -87,22 +99,25 @@ class CompraViewSet(viewsets.ModelViewSet):
         curso.save()
 
 
-    # ACTIONS
-
-
+    # REEMBOLSO - MAIS SEGURO
     @action(detail=True, methods=["post"])
     def solicitar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
+        if compra.usuario != request.user:
+            return Response({"error": "Não permitido"}, status=403)
+
         if compra.status != CompraStatus.COMPLETED:
-            return Response({"error": "Não permitido"}, status=400)
+            return Response({"error": "Status inválido"}, status=400)
 
         compra.status = CompraStatus.PENDING_REFUND
         compra.save()
 
         return Response({"message": "Solicitação enviada"})
 
-    @action(detail=True, methods=["post"])
+
+    # APROVAÇÃO (SÓ ADMIN)
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminUser])
     def aprovar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
@@ -111,7 +126,9 @@ class CompraViewSet(viewsets.ModelViewSet):
 
         return Response({"message": "Reembolso aprovado"})
 
-    @action(detail=True, methods=["post"])
+
+    # RECUSA (SÓ ADMIN)
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminUser])
     def recusar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
@@ -120,6 +137,12 @@ class CompraViewSet(viewsets.ModelViewSet):
 
         return Response({"message": "Reembolso recusado"})
 
+
     @action(detail=True, methods=["post"])
     def liberar_certificado(self, request, pk=None):
+        compra = self.get_object()
+
+        if compra.usuario != request.user:
+            return Response({"error": "Não permitido"}, status=403)
+
         return Response({"message": "Certificado liberado"})

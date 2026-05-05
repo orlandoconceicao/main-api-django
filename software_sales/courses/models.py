@@ -11,7 +11,6 @@ from django.db import models
 
 
 # BASE MODEL
-
 class Base(models.Model):
     criacao = models.DateTimeField(auto_now_add=True)
     atualizacao = models.DateTimeField(auto_now=True)
@@ -22,7 +21,6 @@ class Base(models.Model):
 
 
 # USER MANAGER
-
 class UsuarioManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
@@ -49,7 +47,6 @@ class UsuarioManager(BaseUserManager):
 
 
 # USER
-
 class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
 
@@ -63,7 +60,6 @@ class Usuario(AbstractUser):
 
 
 # CURSO
-
 class Curso(Base):
     nome = models.CharField(max_length=120)
     descricao = models.TextField(
@@ -90,7 +86,8 @@ class Curso(Base):
     media_avaliacoes = models.DecimalField(
         max_digits=3,
         decimal_places=2,
-        default=Decimal("0.00")
+        default=Decimal("0.00"),
+        editable=False
     )
 
     def __str__(self):
@@ -98,7 +95,6 @@ class Curso(Base):
 
 
 # AVALIACAO
-
 class Avaliacao(Base):
     usuario = models.ForeignKey(
         Usuario,
@@ -129,9 +125,12 @@ class Avaliacao(Base):
     def __str__(self):
         return f"{self.usuario.username} - {self.curso.nome}"
 
+    class Meta:
+        # evita spam de avaliações duplicadas
+        unique_together = ("usuario", "curso")
+
 
 # COMPRA STATUS
-
 class CompraStatus(models.TextChoices):
     PENDING = "pending", "Pendente"
     PENDING_REFUND = "pending_refund", "Reembolso Pendente"
@@ -140,7 +139,6 @@ class CompraStatus(models.TextChoices):
 
 
 # COMPRA
-
 class Compra(Base):
     usuario = models.ForeignKey(
         Usuario,
@@ -156,7 +154,8 @@ class Compra(Base):
 
     preco = models.DecimalField(
         max_digits=10,
-        decimal_places=2
+        decimal_places=2,
+        editable=False
     )
 
     status = models.CharField(
@@ -166,7 +165,8 @@ class Compra(Base):
     )
 
     def save(self, *args, **kwargs):
-        if self.preco is None:
+        # trava preço no momento da compra
+        if not self.preco:
             self.preco = self.curso.preco
 
         self.preco = Decimal(self.preco).quantize(
@@ -180,8 +180,7 @@ class Compra(Base):
         return f"{self.usuario.username} - {self.curso.nome}"
 
 
-# AUDITORIA
-
+# AUDITORIA (modelo pronto para uso futuro)
 class Auditoria(models.Model):
     ACAO_CHOICES = (
         ("CREATE", "Create"),
@@ -204,15 +203,8 @@ class Auditoria(models.Model):
     modelo = models.CharField(max_length=100)
     objeto_id = models.IntegerField()
 
-    dados_antes = models.JSONField(
-        null=True,
-        blank=True
-    )
-
-    dados_depois = models.JSONField(
-        null=True,
-        blank=True
-    )
+    dados_antes = models.JSONField(null=True, blank=True)
+    dados_depois = models.JSONField(null=True, blank=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)
 

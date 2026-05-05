@@ -7,12 +7,10 @@ from .models import (
     Curso,
     Avaliacao,
     Compra,
-    CompraStatus,
 )
 
 
 # USUARIO
-
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -24,9 +22,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "username",
             "password",
         ]
-        read_only_fields = [
-            "id",
-        ]
+        read_only_fields = ["id"]
 
     def create(self, validated_data):
         return Usuario.objects.create_user(**validated_data)
@@ -35,9 +31,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
         value = value.lower()
 
         if Usuario.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                "Email já está em uso"
-            )
+            raise serializers.ValidationError("Email já está em uso")
 
         return value
 
@@ -46,25 +40,13 @@ class UsuarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Username deve ter no mínimo 3 caracteres"
             )
-
         return value
 
 
 # CURSO
-
 class CursoSerializer(serializers.ModelSerializer):
     criado_por_nome = serializers.CharField(
         source="criado_por.username",
-        read_only=True
-    )
-
-    total_avaliacoes = serializers.IntegerField(
-        read_only=True
-    )
-
-    media_avaliacoes_calc = serializers.DecimalField(
-        max_digits=3,
-        decimal_places=2,
         read_only=True
     )
 
@@ -78,14 +60,14 @@ class CursoSerializer(serializers.ModelSerializer):
             "criado_por",
             "criado_por_nome",
             "total_vendas",
-            "total_avaliacoes",
+            "media_avaliacoes",
             "criacao",
-            "media_avaliacoes_calc",
         ]
 
         read_only_fields = [
             "id",
             "total_vendas",
+            "media_avaliacoes",
             "criacao",
             "criado_por",
         ]
@@ -113,7 +95,6 @@ class CursoSerializer(serializers.ModelSerializer):
 
 
 # AVALIACAO
-
 class AvaliacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Avaliacao
@@ -132,9 +113,24 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
             "usuario",
         ]
 
+    def validate(self, data):
+        request = self.context.get("request")
+        curso = data.get("curso")
+
+        # impede avaliação duplicada
+        if request and curso:
+            if Avaliacao.objects.filter(
+                usuario=request.user,
+                curso=curso
+            ).exists():
+                raise serializers.ValidationError(
+                    "Você já avaliou este curso"
+                )
+
+        return data
+
 
 # COMPRA
-
 class CompraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Compra
@@ -153,13 +149,29 @@ class CompraSerializer(serializers.ModelSerializer):
             "status",
         ]
 
+    def validate(self, data):
+        curso = data.get("curso")
 
-# HISTORICO
+        if not curso:
+            raise serializers.ValidationError("Curso inválido")
 
+        return data
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+
+        return Compra.objects.create(
+            usuario=request.user,
+            curso=validated_data["curso"],
+            preco=validated_data["curso"].preco
+        )
+
+
+# HISTORICO (SEGURANÇA MELHORADA)
 class HistoricoSerializer(serializers.Serializer):
-    tipo = serializers.CharField()
-    curso = serializers.CharField()
-    nota = serializers.FloatField(required=False)
-    preco = serializers.CharField(required=False)
-    status = serializers.CharField(required=False)
-    data = serializers.DateTimeField()
+    tipo = serializers.CharField(read_only=True)
+    curso = serializers.CharField(read_only=True)
+    nota = serializers.FloatField(required=False, read_only=True)
+    preco = serializers.CharField(required=False, read_only=True)
+    status = serializers.CharField(required=False, read_only=True)
+    data = serializers.DateTimeField(read_only=True)

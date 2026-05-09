@@ -1,10 +1,11 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function getCursos() {
-  const response = await fetch(
-    `${API_URL}/api/cursos/`
-  );
+  const res = await fetch(`${API_URL}/api/cursos/`);
 
-  return response.json();
+  if (!res.ok) {
+    throw new Error("Erro ao buscar cursos");
+  }
+
+  return res.json();
 }

@@ -37,11 +37,23 @@ export default function DashboardPage() {
     loadCursos();
   }, []);
 
-  // CAPA DO CURSO (ESTILO PROFISSIONAL)
+  // CAPA FIXA (FUNCIONA EM PRODUÇÃO)
   function getCourseImage(nome: string) {
-    return `https://source.unsplash.com/600x400/?${encodeURIComponent(
-      nome + ",technology,programming,computer"
-    )}`;
+    const images: Record<string, string> = {
+      "Engenharia de software":
+        "https://images.unsplash.com/photo-1518770660439-4636190af475",
+
+      "Analise e desenvolvimento de sistemas":
+        "https://images.unsplash.com/photo-1555066931-4365d14bab8c",
+
+      "Cibersegurança":
+        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b",
+    };
+
+    return (
+      images[nome] ||
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5"
+    );
   }
 
   // LOADING
@@ -84,12 +96,13 @@ export default function DashboardPage() {
                 hover:scale-[1.02]
               "
             >
-              {/* CAPA DO CURSO */}
+              {/* 🖼️ CAPA */}
               <div className="h-52 overflow-hidden">
                 <img
                   src={getCourseImage(curso.nome)}
                   alt={curso.nome}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </div>
 

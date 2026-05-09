@@ -10,24 +10,28 @@ interface Curso {
   preco: string;
   total_vendas: number;
   media_avaliacoes: string;
-  ativo?: boolean;
+  criado_por_nome?: string;
+  criacao?: string;
 }
 
 export default function DashboardPage() {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
 
-  //  CARREGAR CURSOS
+  // CARREGAR CURSOS
   useEffect(() => {
     async function loadCursos() {
       try {
         const data = await getCursos();
 
-        console.log("API DATA:", data);
+        // CORREÇÃO PRINCIPAL (API paginada Django)
+        const cursosFormatados = Array.isArray(data)
+          ? data
+          : data?.results || [];
 
-        setCursos(Array.isArray(data) ? data : data.results || []);
+        setCursos(cursosFormatados);
       } catch (error) {
-        console.error("Erro ao buscar cursos:", error);
+        console.error("Erro ao carregar cursos:", error);
       } finally {
         setLoading(false);
       }
@@ -36,7 +40,7 @@ export default function DashboardPage() {
     loadCursos();
   }, []);
 
-  //  LINKS (UDemy + Google)
+  // LINKS (UDemy + Google Images)
   function getCourseLinks(nome: string) {
     const query = encodeURIComponent(nome);
 
@@ -46,7 +50,7 @@ export default function DashboardPage() {
     };
   }
 
-  // 🎨 LOADING STATE
+  // LOADING
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white">
@@ -89,7 +93,7 @@ export default function DashboardPage() {
                   hover:scale-[1.02]
                 "
               >
-                {/* IMAGEM REAL DO CURSO */}
+                {/* IMAGEM AUTOMÁTICA */}
                 <div className="h-52 overflow-hidden">
                   <img
                     src={`https://source.unsplash.com/600x400/?${encodeURIComponent(
@@ -133,14 +137,8 @@ export default function DashboardPage() {
                   <div className="flex justify-between text-sm text-zinc-400">
                     <span>{curso.total_vendas} vendas</span>
 
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs ${
-                        curso.ativo
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
-                    >
-                      {curso.ativo ? "Ativo" : "Inativo"}
+                    <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
+                      Ativo
                     </span>
                   </div>
 
@@ -186,7 +184,7 @@ export default function DashboardPage() {
           })}
         </div>
 
-        {/* SEM CURSOS */}
+        {/* VAZIO */}
         {cursos.length === 0 && (
           <div className="text-center py-24">
             <h2 className="text-3xl font-bold mb-4">
@@ -194,7 +192,7 @@ export default function DashboardPage() {
             </h2>
 
             <p className="text-zinc-400">
-              Cadastre cursos no Django Admin ou verifique a API.
+              Verifique se existem cursos cadastrados na API.
             </p>
           </div>
         )}

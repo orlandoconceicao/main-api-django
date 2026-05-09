@@ -7,14 +7,17 @@ import os
 # BASE
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ENV
 config = AutoConfig(search_path=BASE_DIR)
 
 # SECURITY
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "main-api-django-tu0m.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 # APPS
 INSTALLED_APPS = [
@@ -25,11 +28,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # third party
     "rest_framework",
     "corsheaders",
     "django_filters",
     "drf_yasg",
 
+    # apps
     "software_sales.core.apps.CoreConfig",
     "software_sales.courses.apps.CoursesConfig",
 ]
@@ -39,6 +44,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
+    # 🔥 CORS TEM QUE FICAR AQUI EM CIMA
     "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -49,7 +55,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# ROOT
+# URL / WSGI
 ROOT_URLCONF = "software_sales.core.urls"
 WSGI_APPLICATION = "software_sales.core.wsgi.application"
 ASGI_APPLICATION = "software_sales.core.asgi.application"
@@ -78,25 +84,30 @@ TEMPLATES = [
     },
 ]
 
-# STATIC
+# STATIC FILES
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # DEFAULT
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# USER MODEL
+# AUTH
 AUTH_USER_MODEL = "courses.Usuario"
 
-# CORS
+# CORS (🔥 CORRETO PARA FRONTEND NO RENDER)
+
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="https://main-api-django-tu0m.onrender.com",
+    default="https://software-sales-frontend.onrender.com",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
-# DRF
+# SE QUISER DEBUG RÁPIDO (NÃO USAR EM PROD)
+# CORS_ALLOW_ALL_ORIGINS = True
+
+# REST FRAMEWORK
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -108,9 +119,8 @@ REST_FRAMEWORK = {
         "django_filters.rest_framework.DjangoFilterBackend",
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": None,
+    "PAGE_SIZE": 10,
 
-    # SEGURANÇA (RATE LIMIT)
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.AnonRateThrottle",
@@ -127,7 +137,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-# SWAGGER (SÓ EM DESENVOLVIMENTO)
+# SWAGGER (DEV ONLY)
 if DEBUG:
     SWAGGER_SETTINGS = {
         "USE_SESSION_AUTH": False,
@@ -136,10 +146,8 @@ if DEBUG:
                 "type": "apiKey",
                 "name": "Authorization",
                 "in": "header",
-                "description": "Use: Bearer <seu_token>",
             }
         },
-        "SECURITY": [{"Bearer": []}],
     }
 
 # EMAIL
@@ -152,7 +160,7 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="")
 
-# RENDER / HTTPS
+# RENDER HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 

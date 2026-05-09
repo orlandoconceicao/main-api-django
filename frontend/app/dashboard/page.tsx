@@ -200,3 +200,4 @@ export default function DashboardPage() {
     </main>
   );
 }
+console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);

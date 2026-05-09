@@ -16,7 +16,7 @@ export default function DashboardPage() {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
 
-  //  CARREGAR CURSOS
+  // CARREGAR CURSOS
   useEffect(() => {
     async function loadCursos() {
       try {
@@ -37,24 +37,14 @@ export default function DashboardPage() {
     loadCursos();
   }, []);
 
-  // 🖼️ IMAGEM DOS CURSOS (UNSPLASH)
+  // CAPA DO CURSO (ESTILO PROFISSIONAL)
   function getCourseImage(nome: string) {
     return `https://source.unsplash.com/600x400/?${encodeURIComponent(
-      nome + ",programming,technology"
+      nome + ",technology,programming,computer"
     )}`;
   }
 
-  //  LINKS EXTERNOS
-  function getLinks(nome: string) {
-    const q = encodeURIComponent(nome);
-
-    return {
-      udemy: `https://www.udemy.com/courses/search/?q=${q}`,
-      google: `https://www.google.com/search?tbm=isch&q=${q}`,
-    };
-  }
-
-  //  LOADING
+  // LOADING
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white">
@@ -81,109 +71,68 @@ export default function DashboardPage() {
       {/* CURSOS */}
       <section className="max-w-7xl mx-auto px-6 py-14">
         <div className="grid md:grid-cols-3 gap-8">
-          {cursos.map((curso) => {
-            const links = getLinks(curso.nome);
+          {cursos.map((curso) => (
+            <div
+              key={curso.id}
+              className="
+                bg-zinc-900
+                border border-zinc-800
+                rounded-3xl
+                overflow-hidden
+                hover:border-zinc-600
+                transition
+                hover:scale-[1.02]
+              "
+            >
+              {/* CAPA DO CURSO */}
+              <div className="h-52 overflow-hidden">
+                <img
+                  src={getCourseImage(curso.nome)}
+                  alt={curso.nome}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-            return (
-              <div
-                key={curso.id}
-                className="
-                  bg-zinc-900
-                  border border-zinc-800
-                  rounded-3xl
-                  overflow-hidden
-                  hover:border-zinc-600
-                  transition
-                  hover:scale-[1.02]
-                "
-              >
-                {/* IMAGEM */}
-                <div className="h-52 overflow-hidden">
-                  <img
-                    src={getCourseImage(curso.nome)}
-                    alt={curso.nome}
-                    className="w-full h-full object-cover"
-                  />
+              {/* CONTEÚDO */}
+              <div className="p-6 space-y-5">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">
+                    {curso.nome}
+                  </h2>
+
+                  <p className="text-zinc-400 text-sm line-clamp-3">
+                    {curso.descricao}
+                  </p>
                 </div>
 
-                {/* CONTEÚDO */}
-                <div className="p-6 space-y-5">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-2">
-                      {curso.nome}
-                    </h2>
-
-                    <p className="text-zinc-400 text-sm line-clamp-3">
-                      {curso.descricao}
-                    </p>
+                {/* MÉTRICAS */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-zinc-800 rounded-2xl p-4">
+                    <p className="text-zinc-400 text-sm">Preço</p>
+                    <h3 className="text-xl font-bold">
+                      R$ {curso.preco}
+                    </h3>
                   </div>
 
-                  {/* MÉTRICAS */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-zinc-800 rounded-2xl p-4">
-                      <p className="text-zinc-400 text-sm">Preço</p>
-                      <h3 className="text-xl font-bold">
-                        R$ {curso.preco}
-                      </h3>
-                    </div>
-
-                    <div className="bg-zinc-800 rounded-2xl p-4">
-                      <p className="text-zinc-400 text-sm">Nota</p>
-                      <h3 className="text-xl font-bold">
-                        ⭐ {curso.media_avaliacoes}
-                      </h3>
-                    </div>
+                  <div className="bg-zinc-800 rounded-2xl p-4">
+                    <p className="text-zinc-400 text-sm">Nota</p>
+                    <h3 className="text-xl font-bold">
+                      ⭐ {curso.media_avaliacoes}
+                    </h3>
                   </div>
+                </div>
 
-                  {/* VENDAS */}
-                  <div className="flex justify-between text-sm text-zinc-400">
-                    <span>{curso.total_vendas} vendas</span>
+                {/* VENDAS */}
+                <div className="flex justify-between text-sm text-zinc-400">
+                  <span>{curso.total_vendas} vendas</span>
 
-                    <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
-                      Disponível
-                    </span>
-                  </div>
-
-                  {/* BOTÕES */}
-                  <div className="flex gap-3 pt-2">
-                    <a
-                      href={links.udemy}
-                      target="_blank"
-                      className="
-                        flex-1
-                        bg-white
-                        text-black
-                        text-center
-                        py-3
-                        rounded-2xl
-                        font-semibold
-                        hover:opacity-90
-                        transition
-                      "
-                    >
-                      Ver na Udemy
-                    </a>
-
-                    <a
-                      href={links.google}
-                      target="_blank"
-                      className="
-                        px-5
-                        py-3
-                        border
-                        border-zinc-700
-                        rounded-2xl
-                        hover:bg-zinc-800
-                        transition
-                      "
-                    >
-                      📷
-                    </a>
-                  </div>
+                  <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
+                    Disponível
+                  </span>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         {/* SEM CURSOS */}

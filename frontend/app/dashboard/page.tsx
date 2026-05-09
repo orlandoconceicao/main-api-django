@@ -10,21 +10,18 @@ interface Curso {
   preco: string;
   total_vendas: number;
   media_avaliacoes: string;
-  criado_por_nome?: string;
-  criacao?: string;
 }
 
 export default function DashboardPage() {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // CARREGAR CURSOS
+  //  CARREGAR CURSOS
   useEffect(() => {
     async function loadCursos() {
       try {
         const data = await getCursos();
 
-        // CORREÇÃO PRINCIPAL (API paginada Django)
         const cursosFormatados = Array.isArray(data)
           ? data
           : data?.results || [];
@@ -40,17 +37,24 @@ export default function DashboardPage() {
     loadCursos();
   }, []);
 
-  // LINKS (UDemy + Google Images)
-  function getCourseLinks(nome: string) {
-    const query = encodeURIComponent(nome);
+  // 🖼️ IMAGEM DOS CURSOS (UNSPLASH)
+  function getCourseImage(nome: string) {
+    return `https://source.unsplash.com/600x400/?${encodeURIComponent(
+      nome + ",programming,technology"
+    )}`;
+  }
+
+  //  LINKS EXTERNOS
+  function getLinks(nome: string) {
+    const q = encodeURIComponent(nome);
 
     return {
-      udemy: `https://www.udemy.com/courses/search/?q=${query}`,
-      googleImage: `https://www.google.com/search?tbm=isch&q=${query}`,
+      udemy: `https://www.udemy.com/courses/search/?q=${q}`,
+      google: `https://www.google.com/search?tbm=isch&q=${q}`,
     };
   }
 
-  // LOADING
+  //  LOADING
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white">
@@ -78,7 +82,7 @@ export default function DashboardPage() {
       <section className="max-w-7xl mx-auto px-6 py-14">
         <div className="grid md:grid-cols-3 gap-8">
           {cursos.map((curso) => {
-            const links = getCourseLinks(curso.nome);
+            const links = getLinks(curso.nome);
 
             return (
               <div
@@ -93,12 +97,10 @@ export default function DashboardPage() {
                   hover:scale-[1.02]
                 "
               >
-                {/* IMAGEM AUTOMÁTICA */}
+                {/* IMAGEM */}
                 <div className="h-52 overflow-hidden">
                   <img
-                    src={`https://source.unsplash.com/600x400/?${encodeURIComponent(
-                      curso.nome
-                    )}`}
+                    src={getCourseImage(curso.nome)}
                     alt={curso.nome}
                     className="w-full h-full object-cover"
                   />
@@ -138,7 +140,7 @@ export default function DashboardPage() {
                     <span>{curso.total_vendas} vendas</span>
 
                     <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
-                      Ativo
+                      Disponível
                     </span>
                   </div>
 
@@ -163,7 +165,7 @@ export default function DashboardPage() {
                     </a>
 
                     <a
-                      href={links.googleImage}
+                      href={links.google}
                       target="_blank"
                       className="
                         px-5
@@ -184,7 +186,7 @@ export default function DashboardPage() {
           })}
         </div>
 
-        {/* VAZIO */}
+        {/* SEM CURSOS */}
         {cursos.length === 0 && (
           <div className="text-center py-24">
             <h2 className="text-3xl font-bold mb-4">
@@ -192,7 +194,7 @@ export default function DashboardPage() {
             </h2>
 
             <p className="text-zinc-400">
-              Verifique se existem cursos cadastrados na API.
+              Verifique a API ou cadastre cursos no Django admin.
             </p>
           </div>
         )}
@@ -200,4 +202,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);

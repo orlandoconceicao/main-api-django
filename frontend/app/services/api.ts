@@ -1,11 +1,10 @@
-const API_URL = "https://main-api-django-tu0m.onrender.com/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL;
 
 export async function getCursos() {
-  const response = await fetch(`${API_URL}/cursos/`);
-
-  if (!response.ok) {
-    throw new Error("Erro ao buscar cursos");
-  }
+  const response = await fetch(
+    `${API_URL}/api/cursos/`
+  );
 
   return response.json();
 }

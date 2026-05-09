@@ -10,37 +10,49 @@ interface Curso {
   preco: string;
   total_vendas: number;
   media_avaliacoes: string;
+  ativo?: boolean;
 }
 
 export default function DashboardPage() {
   const [cursos, setCursos] = useState<Curso[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  //  CARREGAR CURSOS
   useEffect(() => {
     async function loadCursos() {
       try {
         const data = await getCursos();
-        setCursos(data.results || []);
+
+        console.log("API DATA:", data);
+
+        setCursos(Array.isArray(data) ? data : data.results || []);
       } catch (error) {
-        console.error(error);
+        console.error("Erro ao buscar cursos:", error);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadCursos();
   }, []);
 
-  function getUdemyLink(nome: string) {
-    const links: Record<string, string> = {
-      "Engenharia de software":
-        "https://www.udemy.com/topic/software-engineering/",
+  //  LINKS (UDemy + Google)
+  function getCourseLinks(nome: string) {
+    const query = encodeURIComponent(nome);
 
-      "Analise e desenvolvimento de sistemas":
-        "https://www.udemy.com/topic/software-development/",
-
-      "Cibersegurança":
-        "https://www.udemy.com/topic/cyber-security/",
+    return {
+      udemy: `https://www.udemy.com/courses/search/?q=${query}`,
+      googleImage: `https://www.google.com/search?tbm=isch&q=${query}`,
     };
+  }
 
-    return links[nome] || "https://www.udemy.com/";
+  // 🎨 LOADING STATE
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white">
+        <p className="text-xl animate-pulse">Carregando cursos...</p>
+      </div>
+    );
   }
 
   return (
@@ -53,8 +65,7 @@ export default function DashboardPage() {
           </h1>
 
           <p className="text-zinc-400 text-lg max-w-2xl">
-            Plataforma moderna de vendas de cursos integrada
-            com Django REST Framework.
+            Plataforma moderna de vendas de cursos integrada com Django REST Framework.
           </p>
         </div>
       </section>
@@ -62,110 +73,117 @@ export default function DashboardPage() {
       {/* CURSOS */}
       <section className="max-w-7xl mx-auto px-6 py-14">
         <div className="grid md:grid-cols-3 gap-8">
-          {cursos.map((curso) => (
-            <div
-              key={curso.id}
-              className="
-                bg-zinc-900
-                border border-zinc-800
-                rounded-3xl
-                overflow-hidden
-                hover:border-zinc-700
-                transition
-              "
-            >
-              {/* IMAGEM */}
-              <div className="h-52 overflow-hidden">
-                <img
-                  src={`https://picsum.photos/600/400?random=${curso.id}`}
-                  alt={curso.nome}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          {cursos.map((curso) => {
+            const links = getCourseLinks(curso.nome);
 
-              {/* CONTEÚDO */}
-              <div className="p-6 space-y-5">
-                <div>
-                  <h2 className="text-2xl font-bold mb-3">
-                    {curso.nome}
-                  </h2>
-
-                  <p className="text-zinc-400 line-clamp-4">
-                    {curso.descricao}
-                  </p>
+            return (
+              <div
+                key={curso.id}
+                className="
+                  bg-zinc-900
+                  border border-zinc-800
+                  rounded-3xl
+                  overflow-hidden
+                  hover:border-zinc-600
+                  transition
+                  hover:scale-[1.02]
+                "
+              >
+                {/* IMAGEM REAL DO CURSO */}
+                <div className="h-52 overflow-hidden">
+                  <img
+                    src={`https://source.unsplash.com/600x400/?${encodeURIComponent(
+                      curso.nome
+                    )}`}
+                    alt={curso.nome}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
-                {/* MÉTRICAS */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-zinc-800 rounded-2xl p-4">
-                    <p className="text-zinc-400 text-sm mb-1">
-                      Preço
-                    </p>
+                {/* CONTEÚDO */}
+                <div className="p-6 space-y-5">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">
+                      {curso.nome}
+                    </h2>
 
-                    <h3 className="text-2xl font-bold">
-                      R$ {curso.preco}
-                    </h3>
+                    <p className="text-zinc-400 text-sm line-clamp-3">
+                      {curso.descricao}
+                    </p>
                   </div>
 
-                  <div className="bg-zinc-800 rounded-2xl p-4">
-                    <p className="text-zinc-400 text-sm mb-1">
-                      Avaliação
-                    </p>
+                  {/* MÉTRICAS */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-zinc-800 rounded-2xl p-4">
+                      <p className="text-zinc-400 text-sm">Preço</p>
+                      <h3 className="text-xl font-bold">
+                        R$ {curso.preco}
+                      </h3>
+                    </div>
 
-                    <h3 className="text-2xl font-bold">
-                      ⭐ {curso.media_avaliacoes}
-                    </h3>
+                    <div className="bg-zinc-800 rounded-2xl p-4">
+                      <p className="text-zinc-400 text-sm">Nota</p>
+                      <h3 className="text-xl font-bold">
+                        ⭐ {curso.media_avaliacoes}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* VENDAS */}
+                  <div className="flex justify-between text-sm text-zinc-400">
+                    <span>{curso.total_vendas} vendas</span>
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs ${
+                        curso.ativo
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                    >
+                      {curso.ativo ? "Ativo" : "Inativo"}
+                    </span>
+                  </div>
+
+                  {/* BOTÕES */}
+                  <div className="flex gap-3 pt-2">
+                    <a
+                      href={links.udemy}
+                      target="_blank"
+                      className="
+                        flex-1
+                        bg-white
+                        text-black
+                        text-center
+                        py-3
+                        rounded-2xl
+                        font-semibold
+                        hover:opacity-90
+                        transition
+                      "
+                    >
+                      Ver na Udemy
+                    </a>
+
+                    <a
+                      href={links.googleImage}
+                      target="_blank"
+                      className="
+                        px-5
+                        py-3
+                        border
+                        border-zinc-700
+                        rounded-2xl
+                        hover:bg-zinc-800
+                        transition
+                      "
+                    >
+                      📷
+                    </a>
                   </div>
                 </div>
-
-                {/* VENDAS */}
-                <div className="flex items-center justify-between">
-                  <p className="text-zinc-400">
-                    {curso.total_vendas} vendas
-                  </p>
-
-                  <span className="bg-green-500/20 text-green-400 text-sm px-3 py-1 rounded-full">
-                    Disponível
-                  </span>
-                </div>
-
-                {/* BOTÕES */}
-                <div className="flex gap-3 pt-2">
-                  <a
-                    href={getUdemyLink(curso.nome)}
-                    target="_blank"
-                    className="
-                      flex-1
-                      bg-white
-                      text-black
-                      text-center
-                      py-3
-                      rounded-2xl
-                      font-semibold
-                      hover:opacity-90
-                      transition
-                    "
-                  >
-                    Ver na Udemy
-                  </a>
-
-                  <button
-                    className="
-                      px-5
-                      py-3
-                      border
-                      border-zinc-700
-                      rounded-2xl
-                      hover:bg-zinc-800
-                      transition
-                    "
-                  >
-                    API
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* SEM CURSOS */}
@@ -176,7 +194,7 @@ export default function DashboardPage() {
             </h2>
 
             <p className="text-zinc-400">
-              Cadastre cursos no Django Admin.
+              Cadastre cursos no Django Admin ou verifique a API.
             </p>
           </div>
         )}

@@ -14,7 +14,15 @@ class AvaliacaoInline(admin.TabularInline):
 class CompraInline(admin.TabularInline):
     model = Compra
     extra = 0
-    readonly_fields = ("usuario", "curso", "preco", "status", "criacao", "atualizacao")
+
+    readonly_fields = (
+        "usuario",
+        "preco",
+        "status",
+        "criacao",
+        "atualizacao"
+    )
+
     can_delete = False
 
 
@@ -38,7 +46,7 @@ class CursoAdmin(admin.ModelAdmin):
         "atualizacao",
     )
 
-    inlines = [AvaliacaoInline]
+    inlines = [AvaliacaoInline, CompraInline]
 
 
 # AVALIACAO
@@ -72,15 +80,22 @@ class CompraAdmin(admin.ModelAdmin):
 
 
 # USUARIO
+from django.contrib.auth.admin import UserAdmin
+
 @admin.register(Usuario)
-class UsuarioAdmin(admin.ModelAdmin):
+class UsuarioAdmin(UserAdmin):
+    model = Usuario
+
     list_display = (
-        "id", "username", "email",
-        "is_staff", "is_active"
+        "id",
+        "username",
+        "email",
+        "is_staff",
+        "is_active",
     )
 
-    list_filter = ("is_staff", "is_active")
-    search_fields = ("username", "email")
-    ordering = ("id",)
-
-    readonly_fields = ("id",)
+    fieldsets = UserAdmin.fieldsets + (
+        ("Informações extras", {
+            "fields": ()
+        }),
+    )

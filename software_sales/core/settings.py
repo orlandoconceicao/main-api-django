@@ -14,11 +14,7 @@ config = AutoConfig(search_path=BASE_DIR)
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,.onrender.com",
-    cast=lambda v: [s.strip() for s in v.split(",")]
-)
+ALLOWED_HOSTS = ["*"]
 
 # APPS
 INSTALLED_APPS = [

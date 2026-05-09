@@ -8,6 +8,7 @@ from django.core.validators import (
     MaxValueValidator,
 )
 from django.db import models
+from django.db.models import Avg
 
 
 # BASE MODEL
@@ -62,6 +63,7 @@ class Usuario(AbstractUser):
 # CURSO
 class Curso(Base):
     nome = models.CharField(max_length=120)
+
     descricao = models.TextField(
         validators=[MaxLengthValidator(500)]
     )
@@ -89,6 +91,26 @@ class Curso(Base):
         default=Decimal("0.00"),
         editable=False
     )
+
+    def atualizar_metricas(self):
+        self.total_vendas = self.compras.count()
+
+        media = self.avaliacoes.aggregate(
+            media=Avg("nota")
+        )["media"]
+
+        self.media_avaliacoes = (
+            Decimal(media).quantize(Decimal("0.01"))
+            if media
+            else Decimal("0.00")
+        )
+
+        self.save(
+            update_fields=[
+                "total_vendas",
+                "media_avaliacoes"
+            ]
+        )
 
     def __str__(self):
         return self.nome
@@ -122,11 +144,19 @@ class Avaliacao(Base):
         validators=[MaxLengthValidator(500)]
     )
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.curso.atualizar_metricas()
+
+    def delete(self, *args, **kwargs):
+        curso = self.curso
+        super().delete(*args, **kwargs)
+        curso.atualizar_metricas()
+
     def __str__(self):
         return f"{self.usuario.username} - {self.curso.nome}"
 
     class Meta:
-        # evita spam de avaliações duplicadas
         unique_together = ("usuario", "curso")
 
 
@@ -165,7 +195,6 @@ class Compra(Base):
     )
 
     def save(self, *args, **kwargs):
-        # trava preço no momento da compra
         if not self.preco:
             self.preco = self.curso.preco
 
@@ -176,11 +205,18 @@ class Compra(Base):
 
         super().save(*args, **kwargs)
 
+        self.curso.atualizar_metricas()
+
+    def delete(self, *args, **kwargs):
+        curso = self.curso
+        super().delete(*args, **kwargs)
+        curso.atualizar_metricas()
+
     def __str__(self):
         return f"{self.usuario.username} - {self.curso.nome}"
 
 
-# AUDITORIA (modelo pronto para uso futuro)
+# AUDITORIA
 class Auditoria(models.Model):
     ACAO_CHOICES = (
         ("CREATE", "Create"),
@@ -201,10 +237,18 @@ class Auditoria(models.Model):
     )
 
     modelo = models.CharField(max_length=100)
+
     objeto_id = models.IntegerField()
 
-    dados_antes = models.JSONField(null=True, blank=True)
-    dados_depois = models.JSONField(null=True, blank=True)
+    dados_antes = models.JSONField(
+        null=True,
+        blank=True
+    )
+
+    dados_depois = models.JSONField(
+        null=True,
+        blank=True
+    )
 
     criado_em = models.DateTimeField(auto_now_add=True)
 

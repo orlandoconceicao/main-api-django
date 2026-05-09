@@ -1,3 +1,10 @@
+nome: orlando
+email: orlando@gmail.com
+senha: python manage.py createsuperuser
+
+nome: admin
+senha: Admin@123
+
 -- Active: 1775603291622@@127.0.0.1@5432@postgres
 Resumo profissional
 WEB DEV

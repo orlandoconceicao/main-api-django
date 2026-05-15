@@ -1,4 +1,4 @@
-from courses.models import Curso
+from software_sales.courses.models import Curso
 
 
 def listar_cursos():

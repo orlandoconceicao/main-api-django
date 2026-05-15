@@ -1,4 +1,4 @@
-from courses.models import Compra
+from software_sales.courses.models import Compra
 
 
 def listar_compras_usuario(usuario):

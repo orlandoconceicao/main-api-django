@@ -1,4 +1,7 @@
-from courses.models import Compra, CompraStatus
+from software_sales.courses.models import (
+    Compra,
+    CompraStatus
+)
 
 
 def criar_compra(*, usuario, curso):

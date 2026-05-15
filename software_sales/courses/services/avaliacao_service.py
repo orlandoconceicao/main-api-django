@@ -1,7 +1,9 @@
 from decimal import Decimal
 from django.db.models import Avg
 
-from courses.models import Avaliacao
+from software_sales.courses.models import (
+    Avaliacao
+)
 
 
 def criar_avaliacao(*, usuario, curso, nota, comentario=""):

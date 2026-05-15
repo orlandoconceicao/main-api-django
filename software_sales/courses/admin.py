@@ -2,11 +2,12 @@ from django.contrib import admin
 from .models import Usuario, Curso, Avaliacao, Compra, Auditoria
 
 
-# USER
+# USUÁRIO
 @admin.register(Usuario)
 class UsuarioAdmin(admin.ModelAdmin):
     list_display = ("id", "username", "email", "is_staff", "is_active")
     search_fields = ("username", "email")
+    list_filter = ("is_staff", "is_active")
 
 
 # CURSO
@@ -17,9 +18,10 @@ class CursoAdmin(admin.ModelAdmin):
         "nome",
         "preco",
         "criado_por_safe",
-        "total_vendas_safe",
-        "media_avaliacoes_safe",
+        "total_vendas",
+        "media_avaliacoes",
         "ativo",
+        "criacao",
     )
 
     search_fields = ("nome",)
@@ -29,24 +31,12 @@ class CursoAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related("criado_por")
 
     def criado_por_safe(self, obj):
-        if not obj.criado_por:
-            return "—"
-        return obj.criado_por.username
+        return obj.criado_por.username if obj.criado_por else "—"
 
     criado_por_safe.short_description = "Criado por"
 
-    def total_vendas_safe(self, obj):
-        return getattr(obj, "total_vendas", 0)
 
-    total_vendas_safe.short_description = "Total vendas"
-
-    def media_avaliacoes_safe(self, obj):
-        return getattr(obj, "media_avaliacoes", 0)
-
-    media_avaliacoes_safe.short_description = "Média avaliações"
-
-
-# AVALIACAO
+# AVALIAÇÃO
 @admin.register(Avaliacao)
 class AvaliacaoAdmin(admin.ModelAdmin):
     list_display = (
@@ -56,10 +46,14 @@ class AvaliacaoAdmin(admin.ModelAdmin):
         "nota",
         "comentario",
         "ativo",
+        "criacao",
     )
 
     search_fields = ("usuario__username", "curso__nome")
-    list_filter = ("ativo",)
+    list_filter = ("ativo", "nota")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("usuario", "curso")
 
 
 # COMPRA
@@ -72,11 +66,11 @@ class CompraAdmin(admin.ModelAdmin):
         "preco",
         "status",
         "ativo",
+        "criacao",
     )
 
-    list_filter = ("status",)
-
     search_fields = ("usuario__username", "curso__nome")
+    list_filter = ("status", "ativo")
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("usuario", "curso")
@@ -94,4 +88,8 @@ class AuditoriaAdmin(admin.ModelAdmin):
         "criado_em",
     )
 
-    list_filter = ("acao",)
+    search_fields = ("modelo", "acao")
+    list_filter = ("acao", "modelo")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("usuario")

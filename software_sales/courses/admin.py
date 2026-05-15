@@ -1,69 +1,62 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import Usuario
+from .models import Usuario, Curso, Avaliacao, Compra, Auditoria
 
 
 @admin.register(Usuario)
-class UsuarioAdmin(UserAdmin):
-    model = Usuario
+class UsuarioAdmin(admin.ModelAdmin):
+    list_display = ("id", "username", "email", "is_staff", "is_active")
+    search_fields = ("username", "email")
 
-    # Lista principal
+
+@admin.register(Curso)
+class CursoAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "username",
-        "email",
-        "first_name",
-        "last_name",
-        "is_staff",
-        "is_active",
-        "date_joined",
+        "nome",
+        "preco",
+        "criado_por",
+        "total_vendas",
+        "media_avaliacoes",
+        "ativo",
     )
+    search_fields = ("nome",)
+    list_filter = ("ativo",)
 
-    # Filtros laterais
-    list_filter = (
-        "is_staff",
-        "is_active",
-        "is_superuser",
+
+@admin.register(Avaliacao)
+class AvaliacaoAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "usuario",
+        "curso",
+        "nota",
+        "comentario",
+        "ativo",
     )
+    search_fields = ("usuario__username", "curso__nome")
 
-    # Busca no admin
-    search_fields = (
-        "username",
-        "email",
-        "first_name",
-        "last_name",
+
+@admin.register(Compra)
+class CompraAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "usuario",
+        "curso",
+        "preco",
+        "status",
+        "ativo",
     )
+    list_filter = ("status",)
 
-    # Ordenação padrão
-    ordering = ("id",)
 
-    # Tela de edição do usuário
-    fieldsets = (
-        (None, {"fields": ("username", "password")}),
-        ("Informações pessoais", {"fields": ("first_name", "last_name", "email")}),
-        ("Permissões", {
-            "fields": (
-                "is_active",
-                "is_staff",
-                "is_superuser",
-                "groups",
-                "user_permissions",
-            )
-        }),
-        ("Datas importantes", {"fields": ("last_login", "date_joined")}),
+@admin.register(Auditoria)
+class AuditoriaAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "usuario",
+        "acao",
+        "modelo",
+        "objeto_id",
+        "criado_em",
     )
-
-    # Tela de criação de usuário
-    add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": (
-                "username",
-                "email",
-                "password1",
-                "password2",
-                "is_staff",
-                "is_active",
-            ),
-        }),
-    )
+    list_filter = ("acao",)

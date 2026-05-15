@@ -5,6 +5,11 @@ senha: python manage.py createsuperuser
 nome: admin
 senha: Admin@123
 
+Swagger claro (rápido impacto)
+README forte (complementa tudo)
+Arquitetura (melhoria contínua)
+Testes (diferencial forte)
+
 -- Active: 1775603291622@@127.0.0.1@5432@postgres
 Resumo profissional
 WEB DEV

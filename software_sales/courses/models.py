@@ -1,12 +1,12 @@
 from decimal import Decimal, ROUND_HALF_UP
 
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator, MaxLengthValidator
 from django.db import models
 from django.db.models import Avg
 
 
-# BASE
+# BASE MODEL
 class Base(models.Model):
     criacao = models.DateTimeField(auto_now_add=True)
     atualizacao = models.DateTimeField(auto_now=True)
@@ -16,47 +16,9 @@ class Base(models.Model):
         abstract = True
 
 
-# MANAGER CORRIGIDO
-class UsuarioManager(BaseUserManager):
-    def create_user(self, email, username, password=None, **extra_fields):
-        if not email:
-            raise ValueError("Email obrigatório")
-        if not username:
-            raise ValueError("Username obrigatório")
-
-        email = self.normalize_email(email)
-
-        user = self.model(
-            email=email,
-            username=username,
-            **extra_fields
-        )
-
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, username, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_active", True)
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser precisa is_staff=True")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser precisa is_superuser=True")
-
-        return self.create_user(email, username, password, **extra_fields)
-
-
-# USER CORRIGIDO
+# USER (CORRIGIDO E SEGURO)
 class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
-
-    objects = UsuarioManager()
-
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email"]
 
     def __str__(self):
         return self.username
@@ -113,7 +75,7 @@ class Curso(Base):
         return self.nome
 
 
-# AVALIACAO
+# AVALIAÇÃO
 class Avaliacao(Base):
     usuario = models.ForeignKey(
         Usuario,
@@ -229,7 +191,11 @@ class Auditoria(models.Model):
         blank=True
     )
 
-    acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
+    acao = models.CharField(
+        max_length=10,
+        choices=ACAO_CHOICES
+    )
+
     modelo = models.CharField(max_length=100)
     objeto_id = models.IntegerField()
 

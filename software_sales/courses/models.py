@@ -16,7 +16,7 @@ class Base(models.Model):
         abstract = True
 
 
-# USER (CORRIGIDO E SEGURO)
+# USER
 class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
 
@@ -61,13 +61,15 @@ class Curso(Base):
 
         media = self.avaliacoes.aggregate(
             media=Avg("nota")
-        )["media"]
+        ).get("media")
 
-        self.media_avaliacoes = (
-            Decimal(media).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            if media
-            else Decimal("0.00")
-        )
+        if media is None:
+            self.media_avaliacoes = Decimal("0.00")
+        else:
+            self.media_avaliacoes = Decimal(str(media)).quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP
+            )
 
         self.save(update_fields=["total_vendas", "media_avaliacoes"])
 
@@ -75,7 +77,7 @@ class Curso(Base):
         return self.nome
 
 
-# AVALIAÇÃO
+# AVALIACAO
 class Avaliacao(Base):
     usuario = models.ForeignKey(
         Usuario,
@@ -158,13 +160,12 @@ class Compra(Base):
         if self.preco is None:
             self.preco = self.curso.preco
 
-        self.preco = Decimal(self.preco).quantize(
+        self.preco = Decimal(str(self.preco)).quantize(
             Decimal("0.01"),
             rounding=ROUND_HALF_UP
         )
 
         super().save(*args, **kwargs)
-
         self.curso.atualizar_metricas()
 
     def delete(self, *args, **kwargs):

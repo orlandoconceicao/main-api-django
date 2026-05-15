@@ -7,7 +7,7 @@ from .models import Usuario
 class UsuarioAdmin(UserAdmin):
     model = Usuario
 
-    # Colunas da listagem no admin
+    # Lista principal
     list_display = (
         "id",
         "username",
@@ -16,6 +16,7 @@ class UsuarioAdmin(UserAdmin):
         "last_name",
         "is_staff",
         "is_active",
+        "date_joined",
     )
 
     # Filtros laterais
@@ -25,7 +26,7 @@ class UsuarioAdmin(UserAdmin):
         "is_superuser",
     )
 
-    # Campos de busca
+    # Busca no admin
     search_fields = (
         "username",
         "email",
@@ -36,18 +37,33 @@ class UsuarioAdmin(UserAdmin):
     # Ordenação padrão
     ordering = ("id",)
 
-    # Campos ao editar usuário
+    # Tela de edição do usuário
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         ("Informações pessoais", {"fields": ("first_name", "last_name", "email")}),
-        ("Permissões", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Permissões", {
+            "fields": (
+                "is_active",
+                "is_staff",
+                "is_superuser",
+                "groups",
+                "user_permissions",
+            )
+        }),
         ("Datas importantes", {"fields": ("last_login", "date_joined")}),
     )
 
-    # Campos ao criar usuário
+    # Tela de criação de usuário
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("username", "email", "password1", "password2", "is_staff", "is_active"),
+            "fields": (
+                "username",
+                "email",
+                "password1",
+                "password2",
+                "is_staff",
+                "is_active",
+            ),
         }),
     )

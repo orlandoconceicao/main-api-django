@@ -9,82 +9,9 @@ from .models import (
     Auditoria,
 )
 
-# USUÁRIO
-@admin.register(Usuario)
-class UsuarioAdmin(UserAdmin):
-    model = Usuario
-
-    list_display = (
-        "id",
-        "username",
-        "email",
-        "is_staff",
-        "is_superuser",
-        "is_active",
-    )
-
-    list_filter = (
-        "is_staff",
-        "is_superuser",
-        "is_active",
-    )
-
-    search_fields = (
-        "username",
-        "email",
-    )
-
-    ordering = ("id",)
-
-    fieldsets = (
-        (None, {
-            "fields": (
-                "username",
-                "password",
-            )
-        }),
-
-        ("Informações pessoais", {
-            "fields": (
-                "first_name",
-                "last_name",
-                "email",
-            )
-        }),
-
-        ("Permissões", {
-            "fields": (
-                "is_active",
-                "is_staff",
-                "is_superuser",
-                "groups",
-                "user_permissions",
-            )
-        }),
-
-        ("Datas importantes", {
-            "fields": (
-                "last_login",
-                "date_joined",
-            )
-        }),
-    )
-
-    add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": (
-                "username",
-                "email",
-                "password1",
-                "password2",
-                "is_staff",
-                "is_superuser",
-                "is_active",
-            ),
-        }),
-    )
-
+# USUÁRIO@admin.register(Usuario)
+class UsuarioAdmin(admin.ModelAdmin):
+    list_display = ("id", "username", "email")
 
 # CURSO
 @admin.register(Curso)

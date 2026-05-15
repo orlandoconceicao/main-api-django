@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 
 from .models import (
     Usuario,
@@ -9,13 +8,9 @@ from .models import (
     Auditoria,
 )
 
-
-# USUARIO
-
+# USUÁRIO 
 @admin.register(Usuario)
-class UsuarioAdmin(UserAdmin):
-    model = Usuario
-
+class UsuarioAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "username",
@@ -78,8 +73,7 @@ class UsuarioAdmin(UserAdmin):
             "fields": (
                 "username",
                 "email",
-                "password1",
-                "password2",
+                "password",
                 "is_staff",
                 "is_superuser",
                 "is_active",
@@ -89,7 +83,6 @@ class UsuarioAdmin(UserAdmin):
 
 
 # CURSO
-
 @admin.register(Curso)
 class CursoAdmin(admin.ModelAdmin):
     list_display = (
@@ -102,9 +95,7 @@ class CursoAdmin(admin.ModelAdmin):
         "ativo",
     )
 
-    search_fields = (
-        "nome",
-    )
+    search_fields = ("nome",)
 
     list_filter = (
         "ativo",
@@ -112,8 +103,7 @@ class CursoAdmin(admin.ModelAdmin):
     )
 
 
-# AVALIACAO
-
+# AVALIAÇÃO
 @admin.register(Avaliacao)
 class AvaliacaoAdmin(admin.ModelAdmin):
     list_display = (
@@ -129,9 +119,12 @@ class AvaliacaoAdmin(admin.ModelAdmin):
         "curso__nome",
     )
 
+    list_filter = (
+        "nota",
+    )
+
 
 # COMPRA
-
 @admin.register(Compra)
 class CompraAdmin(admin.ModelAdmin):
     list_display = (
@@ -147,9 +140,13 @@ class CompraAdmin(admin.ModelAdmin):
         "status",
     )
 
+    search_fields = (
+        "usuario__username",
+        "curso__nome",
+    )
+
 
 # AUDITORIA
-
 @admin.register(Auditoria)
 class AuditoriaAdmin(admin.ModelAdmin):
     list_display = (
@@ -163,5 +160,10 @@ class AuditoriaAdmin(admin.ModelAdmin):
 
     list_filter = (
         "acao",
+        "modelo",
+    )
+
+    search_fields = (
+        "usuario__username",
         "modelo",
     )

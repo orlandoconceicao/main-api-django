@@ -36,8 +36,53 @@ class UsuarioAdmin(UserAdmin):
 
     ordering = ("id",)
 
-    fieldsets = UserAdmin.fieldsets + (
-        ("Informações extras", {"fields": ()}),
+    fieldsets = (
+        (None, {
+            "fields": (
+                "username",
+                "password",
+            )
+        }),
+
+        ("Informações pessoais", {
+            "fields": (
+                "first_name",
+                "last_name",
+                "email",
+            )
+        }),
+
+        ("Permissões", {
+            "fields": (
+                "is_active",
+                "is_staff",
+                "is_superuser",
+                "groups",
+                "user_permissions",
+            )
+        }),
+
+        ("Datas importantes", {
+            "fields": (
+                "last_login",
+                "date_joined",
+            )
+        }),
+    )
+
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": (
+                "username",
+                "email",
+                "password1",
+                "password2",
+                "is_staff",
+                "is_superuser",
+                "is_active",
+            ),
+        }),
     )
 
 
@@ -78,9 +123,7 @@ class AvaliacaoAdmin(admin.ModelAdmin):
         "curso__nome",
     )
 
-    list_filter = (
-        "nota",
-    )
+    list_filter = ("nota",)
 
 
 # COMPRA
@@ -95,9 +138,7 @@ class CompraAdmin(admin.ModelAdmin):
         "criacao",
     )
 
-    list_filter = (
-        "status",
-    )
+    list_filter = ("status",)
 
     search_fields = (
         "usuario__username",

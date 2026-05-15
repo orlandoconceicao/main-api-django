@@ -28,15 +28,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # third party
     "rest_framework",
     "corsheaders",
     "django_filters",
     "drf_yasg",
 
-    # apps
-    "software_sales.core.apps.CoreConfig",
-    "software_sales.courses.apps.CoursesConfig",
+    "software_sales.core",
+    "software_sales.courses",
 ]
 
 # MIDDLEWARE

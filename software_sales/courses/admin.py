@@ -14,13 +14,36 @@ class CursoAdmin(admin.ModelAdmin):
         "id",
         "nome",
         "preco",
-        "criado_por",
-        "total_vendas",
-        "media_avaliacoes",
+        "criado_por_safe",
+        "total_vendas_safe",
+        "media_avaliacoes_safe",
         "ativo",
     )
+
     search_fields = ("nome",)
     list_filter = ("ativo",)
+
+    # Proteção contra crash no admin
+    def criado_por_safe(self, obj):
+        return getattr(obj.criado_por, "username", None) or "—"
+
+    criado_por_safe.short_description = "Criado por"
+
+    def total_vendas_safe(self, obj):
+        try:
+            return obj.total_vendas
+        except Exception:
+            return 0
+
+    total_vendas_safe.short_description = "Total vendas"
+
+    def media_avaliacoes_safe(self, obj):
+        try:
+            return obj.media_avaliacoes
+        except Exception:
+            return 0
+
+    media_avaliacoes_safe.short_description = "Média avaliações"
 
 
 @admin.register(Avaliacao)

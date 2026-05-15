@@ -2,12 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import (
-    Usuario,
-    Curso,
-    Avaliacao,
-    Compra,
-)
+from .models import Usuario, Curso, Avaliacao, Compra
 
 
 # USUARIO
@@ -16,21 +11,23 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = [
-            "id",
-            "email",
-            "username",
-            "password",
-        ]
+        fields = ["id", "email", "username", "password"]
         read_only_fields = ["id"]
 
     def create(self, validated_data):
+        validated_data["email"] = validated_data["email"].lower()
         return Usuario.objects.create_user(**validated_data)
 
     def validate_email(self, value):
         value = value.lower()
 
-        if Usuario.objects.filter(email=value).exists():
+        qs = Usuario.objects.filter(email=value)
+
+        # evita conflito em update
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+
+        if qs.exists():
             raise serializers.ValidationError("Email já está em uso")
 
         return value
@@ -74,23 +71,17 @@ class CursoSerializer(serializers.ModelSerializer):
 
     def validate_nome(self, value):
         if len(value) < 3:
-            raise serializers.ValidationError(
-                "Nome deve ter no mínimo 3 caracteres"
-            )
+            raise serializers.ValidationError("Nome muito curto")
         return value
 
     def validate_descricao(self, value):
         if len(value) < 10:
-            raise serializers.ValidationError(
-                "Descrição deve ter no mínimo 10 caracteres"
-            )
+            raise serializers.ValidationError("Descrição muito curta")
         return value
 
     def validate_preco(self, value):
         if value < Decimal("0.00"):
-            raise serializers.ValidationError(
-                "Preço não pode ser negativo"
-            )
+            raise serializers.ValidationError("Preço inválido")
         return value
 
 
@@ -98,76 +89,55 @@ class CursoSerializer(serializers.ModelSerializer):
 class AvaliacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Avaliacao
-        fields = [
-            "id",
-            "usuario",
-            "curso",
-            "nota",
-            "comentario",
-            "criacao",
-        ]
-
-        read_only_fields = [
-            "id",
-            "criacao",
-            "usuario",
-        ]
+        fields = ["id", "usuario", "curso", "nota", "comentario", "criacao"]
+        read_only_fields = ["id", "criacao", "usuario"]
 
     def validate(self, data):
         request = self.context.get("request")
         curso = data.get("curso")
 
-        # impede avaliação duplicada
-        if request and curso:
-            if Avaliacao.objects.filter(
-                usuario=request.user,
-                curso=curso
-            ).exists():
-                raise serializers.ValidationError(
-                    "Você já avaliou este curso"
-                )
+        if not request:
+            return data
+
+        # proteção contra duplicação
+        qs = Avaliacao.objects.filter(
+            usuario=request.user,
+            curso=curso
+        )
+
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+
+        if qs.exists():
+            raise serializers.ValidationError(
+                "Você já avaliou este curso"
+            )
 
         return data
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        validated_data["usuario"] = request.user
+        return super().create(validated_data)
 
 
 # COMPRA
 class CompraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Compra
-        fields = [
-            "id",
-            "usuario",
-            "curso",
-            "preco",
-            "status",
-        ]
-
-        read_only_fields = [
-            "id",
-            "usuario",
-            "preco",
-            "status",
-        ]
-
-    def validate(self, data):
-        curso = data.get("curso")
-
-        if not curso:
-            raise serializers.ValidationError("Curso inválido")
-
-        return data
+        fields = ["id", "usuario", "curso", "preco", "status"]
+        read_only_fields = ["id", "usuario", "preco", "status"]
 
     def create(self, validated_data):
         request = self.context.get("request")
 
         return Compra.objects.create(
             usuario=request.user,
-            curso=validated_data["curso"],
-            preco=validated_data["curso"].preco
+            curso=validated_data["curso"]
         )
 
 
-# HISTORICO (SEGURANÇA MELHORADA)
+# HISTORICO
 class HistoricoSerializer(serializers.Serializer):
     tipo = serializers.CharField(read_only=True)
     curso = serializers.CharField(read_only=True)

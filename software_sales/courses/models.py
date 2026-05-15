@@ -6,7 +6,7 @@ from django.db import models
 from django.db.models import Avg
 
 
-# BASE MODEL
+# BASE
 class Base(models.Model):
     criacao = models.DateTimeField(auto_now_add=True)
     atualizacao = models.DateTimeField(auto_now=True)
@@ -57,21 +57,26 @@ class Curso(Base):
     )
 
     def atualizar_metricas(self):
-        self.total_vendas = self.compras.count()
+        try:
+            self.total_vendas = self.compras.count()
 
-        media = self.avaliacoes.aggregate(
-            media=Avg("nota")
-        ).get("media")
+            media = self.avaliacoes.aggregate(
+                media=Avg("nota")
+            ).get("media")
 
-        if media is None:
-            self.media_avaliacoes = Decimal("0.00")
-        else:
-            self.media_avaliacoes = Decimal(str(media)).quantize(
-                Decimal("0.01"),
-                rounding=ROUND_HALF_UP
-            )
+            if not media:
+                self.media_avaliacoes = Decimal("0.00")
+            else:
+                self.media_avaliacoes = Decimal(media).quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP
+                )
 
-        self.save(update_fields=["total_vendas", "media_avaliacoes"])
+            self.save(update_fields=["total_vendas", "media_avaliacoes"])
+
+        except Exception:
+            # evita crash em produção/admin
+            pass
 
     def __str__(self):
         return self.nome
@@ -108,12 +113,18 @@ class Avaliacao(Base):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.curso.atualizar_metricas()
+        try:
+            self.curso.atualizar_metricas()
+        except Exception:
+            pass
 
     def delete(self, *args, **kwargs):
         curso = self.curso
         super().delete(*args, **kwargs)
-        curso.atualizar_metricas()
+        try:
+            curso.atualizar_metricas()
+        except Exception:
+            pass
 
     def __str__(self):
         return f"{self.usuario.username} - {self.curso.nome}"
@@ -122,15 +133,13 @@ class Avaliacao(Base):
         unique_together = ("usuario", "curso")
 
 
-# COMPRA STATUS
+# COMPRA
 class CompraStatus(models.TextChoices):
     PENDING = "pending", "Pendente"
-    PENDING_REFUND = "pending_refund", "Reembolso Pendente"
     COMPLETED = "completed", "Concluído"
     REFUNDED = "refunded", "Reembolsado"
 
 
-# COMPRA
 class Compra(Base):
     usuario = models.ForeignKey(
         Usuario,
@@ -157,7 +166,7 @@ class Compra(Base):
     )
 
     def save(self, *args, **kwargs):
-        if self.preco is None:
+        if not self.preco:
             self.preco = self.curso.preco
 
         self.preco = Decimal(str(self.preco)).quantize(
@@ -166,12 +175,19 @@ class Compra(Base):
         )
 
         super().save(*args, **kwargs)
-        self.curso.atualizar_metricas()
+
+        try:
+            self.curso.atualizar_metricas()
+        except Exception:
+            pass
 
     def delete(self, *args, **kwargs):
         curso = self.curso
         super().delete(*args, **kwargs)
-        curso.atualizar_metricas()
+        try:
+            curso.atualizar_metricas()
+        except Exception:
+            pass
 
     def __str__(self):
         return f"{self.usuario.username} - {self.curso.nome}"
@@ -192,11 +208,7 @@ class Auditoria(models.Model):
         blank=True
     )
 
-    acao = models.CharField(
-        max_length=10,
-        choices=ACAO_CHOICES
-    )
-
+    acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
     modelo = models.CharField(max_length=100)
     objeto_id = models.IntegerField()
 

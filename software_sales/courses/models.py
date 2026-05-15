@@ -21,7 +21,7 @@ class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
 
     def __str__(self):
-        return self.username or "user"
+        return self.username or "usuario"
 
 
 # CURSO
@@ -45,6 +45,7 @@ class Curso(Base):
         Usuario,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name="cursos"
     )
 
@@ -58,19 +59,17 @@ class Curso(Base):
     )
 
     def atualizar_metricas(self):
-        try:
-            self.total_vendas = self.compras.count()
+        """Atualiza vendas e média com segurança."""
+        self.total_vendas = self.compras.count()
 
-            media = self.avaliacoes.aggregate(media=Avg("nota")).get("media")
+        media = self.avaliacoes.aggregate(avg=Avg("nota")).get("avg")
 
-            self.media_avaliacoes = (
-                Decimal(media).quantize(Decimal("0.01"), ROUND_HALF_UP)
-                if media else Decimal("0.00")
-            )
+        self.media_avaliacoes = (
+            Decimal(str(media)).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            if media is not None else Decimal("0.00")
+        )
 
-            self.save(update_fields=["total_vendas", "media_avaliacoes"])
-        except Exception:
-            pass
+        self.save(update_fields=["total_vendas", "media_avaliacoes"])
 
     def __str__(self):
         return self.nome or "curso"
@@ -78,8 +77,17 @@ class Curso(Base):
 
 # AVALIACAO
 class Avaliacao(Base):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="avaliacoes")
-    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name="avaliacoes")
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="avaliacoes"
+    )
+
+    curso = models.ForeignKey(
+        Curso,
+        on_delete=models.CASCADE,
+        related_name="avaliacoes"
+    )
 
     nota = models.DecimalField(
         max_digits=3,
@@ -89,26 +97,22 @@ class Avaliacao(Base):
 
     comentario = models.TextField(blank=True, null=True)
 
+    class Meta:
+        unique_together = ("usuario", "curso")
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        try:
+        if self.curso_id:
             self.curso.atualizar_metricas()
-        except Exception:
-            pass
 
     def delete(self, *args, **kwargs):
         curso = self.curso
         super().delete(*args, **kwargs)
-        try:
+        if curso:
             curso.atualizar_metricas()
-        except Exception:
-            pass
 
     def __str__(self):
-        return f"{self.usuario} - {self.curso}"
-
-    class Meta:
-        unique_together = ("usuario", "curso")
+        return f"{self.usuario} → {self.curso}"
 
 
 # COMPRA
@@ -119,10 +123,23 @@ class CompraStatus(models.TextChoices):
 
 
 class Compra(Base):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="compras")
-    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name="compras")
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="compras"
+    )
 
-    preco = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    curso = models.ForeignKey(
+        Curso,
+        on_delete=models.CASCADE,
+        related_name="compras"
+    )
+
+    preco = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False
+    )
 
     status = models.CharField(
         max_length=30,
@@ -134,25 +151,24 @@ class Compra(Base):
         if not self.preco:
             self.preco = self.curso.preco
 
-        self.preco = Decimal(str(self.preco)).quantize(Decimal("0.01"), ROUND_HALF_UP)
+        self.preco = Decimal(str(self.preco)).quantize(
+            Decimal("0.01"),
+            ROUND_HALF_UP
+        )
 
         super().save(*args, **kwargs)
 
-        try:
+        if self.curso_id:
             self.curso.atualizar_metricas()
-        except Exception:
-            pass
 
     def delete(self, *args, **kwargs):
         curso = self.curso
         super().delete(*args, **kwargs)
-        try:
+        if curso:
             curso.atualizar_metricas()
-        except Exception:
-            pass
 
     def __str__(self):
-        return f"{self.usuario} - {self.curso}"
+        return f"{self.usuario} → {self.curso}"
 
 
 # AUDITORIA
@@ -163,7 +179,12 @@ class Auditoria(models.Model):
         ("DELETE", "Delete"),
     )
 
-    usuario = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
     modelo = models.CharField(max_length=100)
@@ -176,3 +197,6 @@ class Auditoria(models.Model):
 
     class Meta:
         ordering = ["-criado_em"]
+
+    def __str__(self):
+        return f"{self.acao} - {self.modelo} ({self.objeto_id})"

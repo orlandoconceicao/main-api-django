@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 from .models import (
     Usuario,
@@ -8,9 +9,11 @@ from .models import (
     Auditoria,
 )
 
-# USUÁRIO 
+# USUÁRIO
 @admin.register(Usuario)
-class UsuarioAdmin(admin.ModelAdmin):
+class UsuarioAdmin(UserAdmin):
+    model = Usuario
+
     list_display = (
         "id",
         "username",
@@ -33,52 +36,8 @@ class UsuarioAdmin(admin.ModelAdmin):
 
     ordering = ("id",)
 
-    fieldsets = (
-        (None, {
-            "fields": (
-                "username",
-                "password",
-            )
-        }),
-
-        ("Informações pessoais", {
-            "fields": (
-                "first_name",
-                "last_name",
-                "email",
-            )
-        }),
-
-        ("Permissões", {
-            "fields": (
-                "is_active",
-                "is_staff",
-                "is_superuser",
-                "groups",
-                "user_permissions",
-            )
-        }),
-
-        ("Datas importantes", {
-            "fields": (
-                "last_login",
-                "date_joined",
-            )
-        }),
-    )
-
-    add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": (
-                "username",
-                "email",
-                "password",
-                "is_staff",
-                "is_superuser",
-                "is_active",
-            ),
-        }),
+    fieldsets = UserAdmin.fieldsets + (
+        ("Informações extras", {"fields": ()}),
     )
 
 

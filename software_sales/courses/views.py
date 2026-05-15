@@ -32,22 +32,14 @@ from .services.compra_service import (
     recusar_reembolso as recusar_reembolso_service,
 )
 
-from .services.avaliacao_service import (
-    criar_avaliacao,
-)
+from .services.avaliacao_service import criar_avaliacao
 
 # SELECTORS
-from .selectors.compra_selector import (
-    listar_compras_usuario,
-)
-
-from .selectors.curso_selector import (
-    listar_cursos,
-)
+from .selectors.compra_selector import listar_compras_usuario
+from .selectors.curso_selector import listar_cursos
 
 
-# USUARIO
-
+# USUÁRIO
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
@@ -58,17 +50,20 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_queryset(self):
+        user = self.request.user
+
+        # proteção contra AnonymousUser (Swagger / acesso público)
+        if not user or not user.is_authenticated:
+            return Usuario.objects.none()
+
         # usuário comum só vê ele mesmo
-        if not self.request.user.is_staff:
-            return Usuario.objects.filter(
-                id=self.request.user.id
-            )
+        if not user.is_staff:
+            return Usuario.objects.filter(id=user.id)
 
         return Usuario.objects.all()
 
 
 # CURSO
-
 class CursoViewSet(viewsets.ModelViewSet):
     serializer_class = CursoSerializer
 
@@ -97,25 +92,16 @@ class CursoViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
             return [AllowAny()]
-
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
-        serializer.save(
-            criado_por=self.request.user
-        )
+        serializer.save(criado_por=self.request.user)
 
 
-# AVALIACAO
-
+# AVALIAÇÃO
 class AvaliacaoViewSet(viewsets.ModelViewSet):
-    queryset = Avaliacao.objects.select_related(
-        "usuario",
-        "curso"
-    ).all()
-
+    queryset = Avaliacao.objects.select_related("usuario", "curso").all()
     serializer_class = AvaliacaoSerializer
-
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
@@ -123,24 +109,23 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
             usuario=self.request.user,
             curso=serializer.validated_data["curso"],
             nota=serializer.validated_data["nota"],
-            comentario=serializer.validated_data.get(
-                "comentario",
-                ""
-            )
+            comentario=serializer.validated_data.get("comentario", "")
         )
 
 
 # COMPRA
-
 class CompraViewSet(viewsets.ModelViewSet):
     serializer_class = CompraSerializer
-
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return listar_compras_usuario(
-            self.request.user
-        )
+        user = self.request.user
+
+        # 🔥 EVITA CRASH DO AnonymousUser (Swagger / acesso público)
+        if not user or not user.is_authenticated:
+            return Compra.objects.none()
+
+        return listar_compras_usuario(user)
 
     def perform_create(self, serializer):
         criar_compra(
@@ -148,88 +133,53 @@ class CompraViewSet(viewsets.ModelViewSet):
             curso=serializer.validated_data["curso"]
         )
 
-    # =====================================================
+    # =====================
     # SOLICITAR REEMBOLSO
-    # =====================================================
-
+    # =====================
     @action(detail=True, methods=["post"])
     def solicitar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
         if compra.usuario != request.user:
-            return Response(
-                {"error": "Não permitido"},
-                status=403
-            )
+            return Response({"error": "Não permitido"}, status=403)
 
         if compra.status != CompraStatus.COMPLETED:
-            return Response(
-                {"error": "Status inválido"},
-                status=400
-            )
+            return Response({"error": "Status inválido"}, status=400)
 
-        solicitar_reembolso_service(
-            compra=compra
-        )
+        solicitar_reembolso_service(compra=compra)
 
-        return Response({
-            "message": "Solicitação enviada"
-        })
+        return Response({"message": "Solicitação enviada"})
 
-    # =====================================================
+    # =====================
     # APROVAR REEMBOLSO
-    # =====================================================
-
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[IsAdminUser]
-    )
+    # =====================
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminUser])
     def aprovar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
-        aprovar_reembolso_service(
-            compra=compra
-        )
+        aprovar_reembolso_service(compra=compra)
 
-        return Response({
-            "message": "Reembolso aprovado"
-        })
+        return Response({"message": "Reembolso aprovado"})
 
-    # =====================================================
+    # =====================
     # RECUSAR REEMBOLSO
-    # =====================================================
-
-    @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=[IsAdminUser]
-    )
+    # =====================
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminUser])
     def recusar_reembolso(self, request, pk=None):
         compra = self.get_object()
 
-        recusar_reembolso_service(
-            compra=compra
-        )
+        recusar_reembolso_service(compra=compra)
 
-        return Response({
-            "message": "Reembolso recusado"
-        })
+        return Response({"message": "Reembolso recusado"})
 
-    # =====================================================
+    # =====================
     # CERTIFICADO
-    # =====================================================
-
+    # =====================
     @action(detail=True, methods=["post"])
     def liberar_certificado(self, request, pk=None):
         compra = self.get_object()
 
         if compra.usuario != request.user:
-            return Response(
-                {"error": "Não permitido"},
-                status=403
-            )
+            return Response({"error": "Não permitido"}, status=403)
 
-        return Response({
-            "message": "Certificado liberado"
-        })
+        return Response({"message": "Certificado liberado"})

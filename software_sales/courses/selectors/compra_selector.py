@@ -1,8 +1,8 @@
-from software_sales.courses.models import Compra
+from ..models import Compra
 
 
 def listar_compras_usuario(usuario):
-    return Compra.objects.select_related(
-        "usuario",
-        "curso",
-    ).filter(usuario=usuario)
+    if not usuario or not getattr(usuario, "is_authenticated", False):
+        return Compra.objects.none()
+
+    return Compra.objects.filter(usuario=usuario)

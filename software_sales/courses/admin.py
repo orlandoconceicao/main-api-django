@@ -1,35 +1,53 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Usuario, Curso, Avaliacao, Compra, Auditoria
+from .models import Usuario
 
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
     model = Usuario
 
-    list_display = ("id", "username", "email", "is_staff", "is_active")
-    search_fields = ("username", "email")
+    # Colunas da listagem no admin
+    list_display = (
+        "id",
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "is_staff",
+        "is_active",
+    )
+
+    # Filtros laterais
+    list_filter = (
+        "is_staff",
+        "is_active",
+        "is_superuser",
+    )
+
+    # Campos de busca
+    search_fields = (
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+    )
+
+    # Ordenação padrão
     ordering = ("id",)
 
-    fieldsets = UserAdmin.fieldsets
-    add_fieldsets = UserAdmin.add_fieldsets
+    # Campos ao editar usuário
+    fieldsets = (
+        (None, {"fields": ("username", "password")}),
+        ("Informações pessoais", {"fields": ("first_name", "last_name", "email")}),
+        ("Permissões", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Datas importantes", {"fields": ("last_login", "date_joined")}),
+    )
 
-
-@admin.register(Curso)
-class CursoAdmin(admin.ModelAdmin):
-    list_display = ("id", "nome", "preco", "ativo", "total_vendas")
-
-
-@admin.register(Avaliacao)
-class AvaliacaoAdmin(admin.ModelAdmin):
-    list_display = ("id", "usuario", "curso", "nota", "criacao")
-
-
-@admin.register(Compra)
-class CompraAdmin(admin.ModelAdmin):
-    list_display = ("id", "usuario", "curso", "preco", "status", "criacao")
-
-
-@admin.register(Auditoria)
-class AuditoriaAdmin(admin.ModelAdmin):
-    list_display = ("id", "usuario", "acao", "modelo", "criado_em")
+    # Campos ao criar usuário
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("username", "email", "password1", "password2", "is_staff", "is_active"),
+        }),
+    )

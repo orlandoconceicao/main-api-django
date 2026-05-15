@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import Usuario, Curso, Avaliacao, Compra
+from .models import Usuario, Curso, Avaliacao, Compra, Auditoria
 
 
 # USUARIO
@@ -23,7 +23,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
         qs = Usuario.objects.filter(email=value)
 
-        # evita conflito em update
         if self.instance:
             qs = qs.exclude(id=self.instance.id)
 
@@ -34,18 +33,13 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         if len(value) < 3:
-            raise serializers.ValidationError(
-                "Username deve ter no mínimo 3 caracteres"
-            )
+            raise serializers.ValidationError("Username muito curto")
         return value
 
 
 # CURSO
 class CursoSerializer(serializers.ModelSerializer):
-    criado_por_nome = serializers.CharField(
-        source="criado_por.username",
-        read_only=True
-    )
+    criado_por_nome = serializers.CharField(source="criado_por.username", read_only=True)
 
     class Meta:
         model = Curso
@@ -60,13 +54,12 @@ class CursoSerializer(serializers.ModelSerializer):
             "media_avaliacoes",
             "criacao",
         ]
-
         read_only_fields = [
             "id",
+            "criado_por",
             "total_vendas",
             "media_avaliacoes",
             "criacao",
-            "criado_por",
         ]
 
     def validate_nome(self, value):
@@ -90,28 +83,22 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Avaliacao
         fields = ["id", "usuario", "curso", "nota", "comentario", "criacao"]
-        read_only_fields = ["id", "criacao", "usuario"]
+        read_only_fields = ["id", "usuario", "criacao"]
 
     def validate(self, data):
         request = self.context.get("request")
-        curso = data.get("curso")
 
-        if not request:
-            return data
-
-        # proteção contra duplicação
-        qs = Avaliacao.objects.filter(
-            usuario=request.user,
-            curso=curso
-        )
-
-        if self.instance:
-            qs = qs.exclude(id=self.instance.id)
-
-        if qs.exists():
-            raise serializers.ValidationError(
-                "Você já avaliou este curso"
+        if request and request.user and data.get("curso"):
+            qs = Avaliacao.objects.filter(
+                usuario=request.user,
+                curso=data["curso"]
             )
+
+            if self.instance:
+                qs = qs.exclude(id=self.instance.id)
+
+            if qs.exists():
+                raise serializers.ValidationError("Você já avaliou este curso")
 
         return data
 
@@ -137,11 +124,8 @@ class CompraSerializer(serializers.ModelSerializer):
         )
 
 
-# HISTORICO
-class HistoricoSerializer(serializers.Serializer):
-    tipo = serializers.CharField(read_only=True)
-    curso = serializers.CharField(read_only=True)
-    nota = serializers.FloatField(required=False, read_only=True)
-    preco = serializers.CharField(required=False, read_only=True)
-    status = serializers.CharField(required=False, read_only=True)
-    data = serializers.DateTimeField(read_only=True)
+# AUDITORIA
+class AuditoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Auditoria
+        fields = "__all__"

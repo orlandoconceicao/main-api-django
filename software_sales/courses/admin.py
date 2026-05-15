@@ -1,86 +1,16 @@
 from django.contrib import admin
-from .models import Curso, Avaliacao, Compra, Usuario
-
-
-# AVALIACAO INLINE
-class AvaliacaoInline(admin.TabularInline):
-    model = Avaliacao
-    extra = 0
-    readonly_fields = ("usuario", "nota", "comentario", "criacao", "atualizacao")
-    can_delete = False
-
-
-# COMPRA INLINE
-class CompraInline(admin.TabularInline):
-    model = Compra
-    extra = 0
-
-    readonly_fields = (
-        "usuario",
-        "preco",
-        "status",
-        "criacao",
-        "atualizacao"
-    )
-
-    can_delete = False
-
-
-# CURSO
-@admin.register(Curso)
-class CursoAdmin(admin.ModelAdmin):
-    list_display = (
-        "id", "nome", "criado_por", "preco",
-        "total_vendas", "media_avaliacoes",
-        "ativo", "criacao"
-    )
-
-    list_filter = ("ativo",)
-    search_fields = ("nome", "descricao", "criado_por__email")
-    ordering = ("-criacao",)
-
-    readonly_fields = (
-        "total_vendas",
-        "media_avaliacoes",
-        "criacao",
-        "atualizacao",
-    )
-
-    inlines = [AvaliacaoInline, CompraInline]
-
-
-# AVALIACAO
-@admin.register(Avaliacao)
-class AvaliacaoAdmin(admin.ModelAdmin):
-    list_display = (
-        "id", "usuario", "curso",
-        "nota", "ativo", "criacao"
-    )
-
-    list_filter = ("nota", "ativo")
-    search_fields = ("usuario__email", "curso__nome", "comentario")
-    ordering = ("-criacao",)
-
-    readonly_fields = ("criacao", "atualizacao")
-
-
-# COMPRA
-@admin.register(Compra)
-class CompraAdmin(admin.ModelAdmin):
-    list_display = (
-        "id", "usuario", "curso",
-        "preco", "status", "ativo", "criacao"
-    )
-
-    list_filter = ("status", "ativo")
-    search_fields = ("usuario__email", "curso__nome")
-    ordering = ("-criacao",)
-
-    readonly_fields = ("criacao", "atualizacao")
-
-
-# USUARIO
 from django.contrib.auth.admin import UserAdmin
+
+from .models import (
+    Usuario,
+    Curso,
+    Avaliacao,
+    Compra,
+    Auditoria
+)
+
+
+# USUARIO ADMIN
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
@@ -94,8 +24,94 @@ class UsuarioAdmin(UserAdmin):
         "is_active",
     )
 
+    search_fields = (
+        "username",
+        "email",
+    )
+
+    ordering = ("id",)
+
     fieldsets = UserAdmin.fieldsets + (
-        ("Informações extras", {
+        ("Informações Extras", {
             "fields": ()
         }),
+    )
+
+
+# CURSO ADMIN
+
+@admin.register(Curso)
+class CursoAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "nome",
+        "preco",
+        "criado_por",
+        "total_vendas",
+        "media_avaliacoes",
+        "ativo",
+    )
+
+    search_fields = (
+        "nome",
+    )
+
+    list_filter = (
+        "ativo",
+        "criacao",
+    )
+
+
+# AVALIACAO ADMIN
+
+@admin.register(Avaliacao)
+class AvaliacaoAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "usuario",
+        "curso",
+        "nota",
+        "criacao",
+    )
+
+    search_fields = (
+        "usuario__username",
+        "curso__nome",
+    )
+
+
+# COMPRA ADMIN
+
+@admin.register(Compra)
+class CompraAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "usuario",
+        "curso",
+        "preco",
+        "status",
+        "criacao",
+    )
+
+    list_filter = (
+        "status",
+    )
+
+
+# AUDITORIA ADMIN
+
+@admin.register(Auditoria)
+class AuditoriaAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "usuario",
+        "acao",
+        "modelo",
+        "objeto_id",
+        "criado_em",
+    )
+
+    list_filter = (
+        "acao",
+        "modelo",
     )

@@ -6,11 +6,11 @@ from .models import (
     Curso,
     Avaliacao,
     Compra,
-    Auditoria
+    Auditoria,
 )
 
 
-# USUARIO ADMIN
+# USUARIO
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
@@ -21,6 +21,13 @@ class UsuarioAdmin(UserAdmin):
         "username",
         "email",
         "is_staff",
+        "is_superuser",
+        "is_active",
+    )
+
+    list_filter = (
+        "is_staff",
+        "is_superuser",
         "is_active",
     )
 
@@ -31,14 +38,57 @@ class UsuarioAdmin(UserAdmin):
 
     ordering = ("id",)
 
-    fieldsets = UserAdmin.fieldsets + (
-        ("Informações Extras", {
-            "fields": ()
+    fieldsets = (
+        (None, {
+            "fields": (
+                "username",
+                "password",
+            )
+        }),
+
+        ("Informações pessoais", {
+            "fields": (
+                "first_name",
+                "last_name",
+                "email",
+            )
+        }),
+
+        ("Permissões", {
+            "fields": (
+                "is_active",
+                "is_staff",
+                "is_superuser",
+                "groups",
+                "user_permissions",
+            )
+        }),
+
+        ("Datas importantes", {
+            "fields": (
+                "last_login",
+                "date_joined",
+            )
+        }),
+    )
+
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": (
+                "username",
+                "email",
+                "password1",
+                "password2",
+                "is_staff",
+                "is_superuser",
+                "is_active",
+            ),
         }),
     )
 
 
-# CURSO ADMIN
+# CURSO
 
 @admin.register(Curso)
 class CursoAdmin(admin.ModelAdmin):
@@ -62,7 +112,7 @@ class CursoAdmin(admin.ModelAdmin):
     )
 
 
-# AVALIACAO ADMIN
+# AVALIACAO
 
 @admin.register(Avaliacao)
 class AvaliacaoAdmin(admin.ModelAdmin):
@@ -80,7 +130,7 @@ class AvaliacaoAdmin(admin.ModelAdmin):
     )
 
 
-# COMPRA ADMIN
+# COMPRA
 
 @admin.register(Compra)
 class CompraAdmin(admin.ModelAdmin):
@@ -98,7 +148,7 @@ class CompraAdmin(admin.ModelAdmin):
     )
 
 
-# AUDITORIA ADMIN
+# AUDITORIA
 
 @admin.register(Auditoria)
 class AuditoriaAdmin(admin.ModelAdmin):

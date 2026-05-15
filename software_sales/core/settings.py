@@ -44,7 +44,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
-    # 🔥 CORS TEM QUE FICAR AQUI EM CIMA
+    #  CORS TEM QUE FICAR AQUI EM CIMA
     "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -96,7 +96,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # AUTH
 AUTH_USER_MODEL = "courses.Usuario"
 
-# CORS (🔥 CORRETO PARA FRONTEND NO RENDER)
+# CORS ( CORRETO PARA FRONTEND NO RENDER)
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
@@ -169,3 +169,9 @@ CSRF_TRUSTED_ORIGINS = config(
     default="https://main-api-django-tu0m.onrender.com",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"

@@ -1,17 +1,12 @@
 from decimal import Decimal, ROUND_HALF_UP
 
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.base_user import BaseUserManager
-from django.core.validators import (
-    MaxLengthValidator,
-    MinValueValidator,
-    MaxValueValidator,
-)
+from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.validators import MinValueValidator, MaxValueValidator, MaxLengthValidator
 from django.db import models
 from django.db.models import Avg
 
 
-# BASE MODEL
+# BASE
 class Base(models.Model):
     criacao = models.DateTimeField(auto_now_add=True)
     atualizacao = models.DateTimeField(auto_now=True)
@@ -21,11 +16,13 @@ class Base(models.Model):
         abstract = True
 
 
-# USER MANAGER
+# MANAGER CORRIGIDO
 class UsuarioManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
             raise ValueError("Email obrigatório")
+        if not username:
+            raise ValueError("Username obrigatório")
 
         email = self.normalize_email(email)
 
@@ -44,10 +41,15 @@ class UsuarioManager(BaseUserManager):
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
 
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser precisa is_staff=True")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser precisa is_superuser=True")
+
         return self.create_user(email, username, password, **extra_fields)
 
 
-# USER
+# USER CORRIGIDO
 class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
 
@@ -100,17 +102,12 @@ class Curso(Base):
         )["media"]
 
         self.media_avaliacoes = (
-            Decimal(media).quantize(Decimal("0.01"))
+            Decimal(media).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             if media
             else Decimal("0.00")
         )
 
-        self.save(
-            update_fields=[
-                "total_vendas",
-                "media_avaliacoes"
-            ]
-        )
+        self.save(update_fields=["total_vendas", "media_avaliacoes"])
 
     def __str__(self):
         return self.nome
@@ -141,6 +138,7 @@ class Avaliacao(Base):
 
     comentario = models.TextField(
         blank=True,
+        null=True,
         validators=[MaxLengthValidator(500)]
     )
 
@@ -195,7 +193,7 @@ class Compra(Base):
     )
 
     def save(self, *args, **kwargs):
-        if not self.preco:
+        if self.preco is None:
             self.preco = self.curso.preco
 
         self.preco = Decimal(self.preco).quantize(
@@ -231,24 +229,12 @@ class Auditoria(models.Model):
         blank=True
     )
 
-    acao = models.CharField(
-        max_length=10,
-        choices=ACAO_CHOICES
-    )
-
+    acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
     modelo = models.CharField(max_length=100)
-
     objeto_id = models.IntegerField()
 
-    dados_antes = models.JSONField(
-        null=True,
-        blank=True
-    )
-
-    dados_depois = models.JSONField(
-        null=True,
-        blank=True
-    )
+    dados_antes = models.JSONField(null=True, blank=True)
+    dados_depois = models.JSONField(null=True, blank=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)
 

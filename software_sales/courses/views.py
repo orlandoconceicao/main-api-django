@@ -52,11 +52,9 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # proteção contra AnonymousUser (Swagger / acesso público)
         if not user or not user.is_authenticated:
             return Usuario.objects.none()
 
-        # usuário comum só vê ele mesmo
         if not user.is_staff:
             return Usuario.objects.filter(id=user.id)
 
@@ -66,19 +64,10 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 # CURSO
 class CursoViewSet(viewsets.ModelViewSet):
     serializer_class = CursoSerializer
-
     filter_backends = [DjangoFilterBackend]
 
-    filterset_fields = [
-        "criado_por",
-        "ativo",
-    ]
-
-    search_fields = [
-        "nome",
-        "descricao",
-    ]
-
+    filterset_fields = ["criado_por", "ativo"]
+    search_fields = ["nome", "descricao"]
     ordering_fields = [
         "preco",
         "criacao",
@@ -105,11 +94,15 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
+        # salva corretamente primeiro
+        avaliacao = serializer.save(usuario=self.request.user)
+
+        # chama regra de negócio (service)
         criar_avaliacao(
-            usuario=self.request.user,
-            curso=serializer.validated_data["curso"],
-            nota=serializer.validated_data["nota"],
-            comentario=serializer.validated_data.get("comentario", "")
+            usuario=avaliacao.usuario,
+            curso=avaliacao.curso,
+            nota=avaliacao.nota,
+            comentario=avaliacao.comentario or ""
         )
 
 
@@ -121,20 +114,21 @@ class CompraViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # 🔥 EVITA CRASH DO AnonymousUser (Swagger / acesso público)
         if not user or not user.is_authenticated:
             return Compra.objects.none()
 
         return listar_compras_usuario(user)
 
     def perform_create(self, serializer):
+        compra = serializer.save(usuario=self.request.user)
+
         criar_compra(
-            usuario=self.request.user,
-            curso=serializer.validated_data["curso"]
+            usuario=compra.usuario,
+            curso=compra.curso
         )
 
     # =====================
-    # SOLICITAR REEMBOLSO
+    # REEMBOLSO - USUÁRIO
     # =====================
     @action(detail=True, methods=["post"])
     def solicitar_reembolso(self, request, pk=None):
@@ -151,7 +145,7 @@ class CompraViewSet(viewsets.ModelViewSet):
         return Response({"message": "Solicitação enviada"})
 
     # =====================
-    # APROVAR REEMBOLSO
+    # REEMBOLSO - ADMIN
     # =====================
     @action(detail=True, methods=["post"], permission_classes=[IsAdminUser])
     def aprovar_reembolso(self, request, pk=None):
@@ -161,9 +155,6 @@ class CompraViewSet(viewsets.ModelViewSet):
 
         return Response({"message": "Reembolso aprovado"})
 
-    # =====================
-    # RECUSAR REEMBOLSO
-    # =====================
     @action(detail=True, methods=["post"], permission_classes=[IsAdminUser])
     def recusar_reembolso(self, request, pk=None):
         compra = self.get_object()

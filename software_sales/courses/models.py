@@ -21,7 +21,7 @@ class Usuario(AbstractUser):
     email = models.EmailField(unique=True)
 
     def __str__(self):
-        return self.username
+        return self.username or "user"
 
 
 # CURSO
@@ -43,7 +43,8 @@ class Curso(Base):
 
     criado_por = models.ForeignKey(
         Usuario,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="cursos"
     )
 
@@ -60,56 +61,33 @@ class Curso(Base):
         try:
             self.total_vendas = self.compras.count()
 
-            media = self.avaliacoes.aggregate(
-                media=Avg("nota")
-            ).get("media")
+            media = self.avaliacoes.aggregate(media=Avg("nota")).get("media")
 
-            if not media:
-                self.media_avaliacoes = Decimal("0.00")
-            else:
-                self.media_avaliacoes = Decimal(media).quantize(
-                    Decimal("0.01"),
-                    rounding=ROUND_HALF_UP
-                )
+            self.media_avaliacoes = (
+                Decimal(media).quantize(Decimal("0.01"), ROUND_HALF_UP)
+                if media else Decimal("0.00")
+            )
 
             self.save(update_fields=["total_vendas", "media_avaliacoes"])
-
         except Exception:
-            # evita crash em produção/admin
             pass
 
     def __str__(self):
-        return self.nome
+        return self.nome or "curso"
 
 
 # AVALIACAO
 class Avaliacao(Base):
-    usuario = models.ForeignKey(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name="avaliacoes"
-    )
-
-    curso = models.ForeignKey(
-        Curso,
-        on_delete=models.CASCADE,
-        related_name="avaliacoes"
-    )
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="avaliacoes")
+    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name="avaliacoes")
 
     nota = models.DecimalField(
         max_digits=3,
         decimal_places=2,
-        validators=[
-            MinValueValidator(Decimal("1.00")),
-            MaxValueValidator(Decimal("5.00")),
-        ]
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
 
-    comentario = models.TextField(
-        blank=True,
-        null=True,
-        validators=[MaxLengthValidator(500)]
-    )
+    comentario = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -127,7 +105,7 @@ class Avaliacao(Base):
             pass
 
     def __str__(self):
-        return f"{self.usuario.username} - {self.curso.nome}"
+        return f"{self.usuario} - {self.curso}"
 
     class Meta:
         unique_together = ("usuario", "curso")
@@ -141,23 +119,10 @@ class CompraStatus(models.TextChoices):
 
 
 class Compra(Base):
-    usuario = models.ForeignKey(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name="compras"
-    )
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="compras")
+    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name="compras")
 
-    curso = models.ForeignKey(
-        Curso,
-        on_delete=models.CASCADE,
-        related_name="compras"
-    )
-
-    preco = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        editable=False
-    )
+    preco = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
 
     status = models.CharField(
         max_length=30,
@@ -169,10 +134,7 @@ class Compra(Base):
         if not self.preco:
             self.preco = self.curso.preco
 
-        self.preco = Decimal(str(self.preco)).quantize(
-            Decimal("0.01"),
-            rounding=ROUND_HALF_UP
-        )
+        self.preco = Decimal(str(self.preco)).quantize(Decimal("0.01"), ROUND_HALF_UP)
 
         super().save(*args, **kwargs)
 
@@ -190,7 +152,7 @@ class Compra(Base):
             pass
 
     def __str__(self):
-        return f"{self.usuario.username} - {self.curso.nome}"
+        return f"{self.usuario} - {self.curso}"
 
 
 # AUDITORIA
@@ -201,12 +163,7 @@ class Auditoria(models.Model):
         ("DELETE", "Delete"),
     )
 
-    usuario = models.ForeignKey(
-        Usuario,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
+    usuario = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
 
     acao = models.CharField(max_length=10, choices=ACAO_CHOICES)
     modelo = models.CharField(max_length=100)

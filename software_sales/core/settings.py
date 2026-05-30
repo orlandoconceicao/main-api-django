@@ -3,10 +3,12 @@ from datetime import timedelta
 from decouple import AutoConfig
 import dj_database_url
 import os
+from dotenv import load_dotenv
 
 # BASE
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv()
 config = AutoConfig(search_path=BASE_DIR)
 
 # SECURITY
@@ -60,8 +62,8 @@ ASGI_APPLICATION = "software_sales.core.asgi.application"
 
 # DATABASE
 DATABASES = {
-    "default": dj_database_url.config(
-        default=config("DATABASE_URL", default="sqlite:///db.sqlite3"),
+    "default": dj_database_url.parse(
+        os.getenv("DATABASE_URL", "sqlite:///db.sqlite3"),
         conn_max_age=600,
     )
 }
@@ -94,12 +96,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # AUTH
 AUTH_USER_MODEL = "courses.Usuario"
 
-# CORS ( CORRETO PARA FRONTEND NO RENDER)
-
+# CORS
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="https://software-sales-frontend.onrender.com",
-    cast=lambda v: [s.strip() for s in v.split(",")]
+    default="",
+    cast=lambda v: [s.strip() for s in v.split(",") if s.strip()]
 )
 
 # SE QUISER DEBUG RÁPIDO (NÃO USAR EM PROD)
@@ -139,11 +140,21 @@ SIMPLE_JWT = {
 if DEBUG:
     SWAGGER_SETTINGS = {
         "USE_SESSION_AUTH": False,
+        "VALIDATOR_URL": None,
+        "JSON_EDITOR": False,
+        "SHOW_REQUEST_HEADERS": True,
+        "DISPLAY_OPERATION_ID": True,
+        "TAGS_SORTER": "alpha",
+        "OPERATIONS_SORTER": "alpha",
+        "DOC_EXPANSION": "none",
+        "DEFAULT_MODEL_RENDERING": "example",
+        "SUPPORTED_SUBMIT_METHODS": ["get", "post", "put", "patch", "delete"],
         "SECURITY_DEFINITIONS": {
             "Bearer": {
                 "type": "apiKey",
                 "name": "Authorization",
                 "in": "header",
+                "description": "Use: Bearer <token>",
             }
         },
     }

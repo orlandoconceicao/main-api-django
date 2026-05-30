@@ -41,6 +41,7 @@ static/
 .env.*
 !.env.example
 .env.docker
+.env.local
 
 # DOCKER
 
@@ -74,13 +75,6 @@ htmlcov/
 .DS_Store
 Thumbs.db
 ehthumbs.db
-
-# NODE (caso frontend futuro)
-
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # LOGS E TEMP
 

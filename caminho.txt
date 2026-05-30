@@ -272,12 +272,6 @@ python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
 
-- npx create-react-app frontend
-- cd frontend
-- npm install
-- npm start
-- http://localhost:3000
-
 Opcional:
 - Criar script SQL para popular tabelas
 
@@ -331,7 +325,7 @@ Busca
 ?search=python
 
 Combinação
-/api/cursos/?page=1&page_size=10&search=react&ordering=-criacao&preco__gte=50
+/api/cursos/?page=1&page_size=10&search=python&ordering=-criacao&preco__gte=50
 
 Limit Offset
 ?limit=10&offset=20
@@ -368,7 +362,7 @@ courses/migrations/0002_auditoria.py
 ===== Documentação Swagger/Redoc: ===== (✓)
 - Gerar documentação automática com drf-yasg ou drf-spectacular
 - Disponibilizar endpoints interativos
-- Facilitar integração com frontend e terceiros
+- Facilitar integração com clientes e terceiros via API
 
 Swagger UI:
 http://127.0.0.1:8000/swagger/
@@ -456,7 +450,7 @@ docker-compose -f docker-compose.prod.yml up --build -d
 
 -----
 
-===== Segurança: ===== (x)
+===== Segurança: ===== (✔)
 - Proteger SECRET_KEY
 - Configurar CORS
 - Implementar rate limiting (limite de requisições)
@@ -563,7 +557,7 @@ urls.py
 path('api/v1/', include(...))
 
 EXPLICAÇÃO:
-Evita quebrar frontend no futuro
+Evita quebrar versões de API sem quebra de contrato
 
 -----
 

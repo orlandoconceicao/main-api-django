@@ -185,17 +185,51 @@ pytest
 
 ## Screenshots
 
-| Visão geral | Autenticação |
-|---|---|
-| <p align="center"><img src="img-swagger/introdução.png" width="360" alt="Visão geral Swagger"></p><br>Visão geral da documentação Swagger. | <p align="center"><img src="img-swagger/auth.png" width="360" alt="Autenticação JWT"></p><br>Endpoint de login JWT e refresh. |
+### Visão Geral
 
-| Cursos | Compras |
-|---|---|
-| <p align="center"><img src="img-swagger/cursos.png" width="360" alt="Listagem de cursos"></p><br>API de cursos com filtros e paginação. | <p align="center"><img src="img-swagger/compras.png" width="360" alt="Gestão de compras"></p><br>Fluxo de compras e histórico transacional. |
+![Visão Geral](./img-swagger/introdução.png)
 
-| Avaliações | Administração |
-|---|---|
-| <p align="center"><img src="img-swagger/avaliações.png" width="360" alt="Cadastro de avaliações"></p><br>Registro de avaliações de usuários. | <p align="center"><img src="img-swagger/admin.png" width="360" alt="Auditoria e administração"></p><br>Acesso a registros de auditoria e administração. |
+Visão geral da documentação Swagger.
+
+---
+
+### Autenticação
+
+![Autenticação](./img-swagger/auth.png)
+
+Endpoint de autenticação JWT e refresh de tokens.
+
+---
+
+### Cursos
+
+![Cursos](./img-swagger/cursos.png)
+
+API de cursos com filtros, paginação e operações CRUD.
+
+---
+
+### Compras
+
+![Compras](./img-swagger/compras.png)
+
+Fluxo de compras e histórico transacional.
+
+---
+
+### Avaliações
+
+![Avaliações](./img-swagger/avaliações.png)
+
+Cadastro e gerenciamento de avaliações dos usuários.
+
+---
+
+### Administração
+
+![Administração](./img-swagger/admin.png)
+
+Painel administrativo e registros de auditoria.
 
 ## 👨‍💻 Autor
 

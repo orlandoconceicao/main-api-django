@@ -1,8 +1,13 @@
 from pathlib import Path
+
 from datetime import timedelta
+
 from decouple import AutoConfig
+
 import dj_database_url
+
 import os
+
 from dotenv import load_dotenv
 
 # BASE

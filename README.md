@@ -1,4 +1,4 @@
-﻿# Software Sales API
+﻿# Smart Course Platform
 
 ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-orange)
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
@@ -11,7 +11,7 @@
 
 ## Sobre o Projeto
 
-Software Sales API é uma API RESTful profissional para gestão de um marketplace de cursos online. Ela entrega um backend completo para cadastro de usuários, autenticação JWT, gestão de cursos, avaliações, compras e auditoria de ações, com foco em segurança, escalabilidade e documentação API-first.
+Smart Course Platform é uma API RESTful profissional para gestão de um marketplace de cursos online. Ela entrega um backend completo para cadastro de usuários, autenticação JWT, gestão de cursos, avaliações, compras e auditoria de ações, com foco em segurança, escalabilidade e documentação API-first.
 
 A API resolve o problema de construir rapidamente um sistema de vendas educativo com recursos essenciais de backend, reduzindo a complexidade de autenticação e operações transacionais. O projeto é ideal para portfólio de desenvolvedores que querem demonstrar domínio de Django, DRF, PostgreSQL e infraestrutura containerizada.
 

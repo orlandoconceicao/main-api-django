@@ -7,6 +7,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from .models import Usuario, Curso, Avaliacao, Compra, Auditoria
+from .permissions import IsCourseOwnerOrReadOnly, IsOwnerOrStaff
+from .signals import audit_user
 from .serializers import (
     UsuarioSerializer,
     CursoSerializer,
@@ -107,6 +109,16 @@ AUDIT_FILTER_PARAMETERS = [
 ]
 
 
+class AuditedViewSetMixin:
+    def perform_update(self, serializer):
+        with audit_user(self.request.user):
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        with audit_user(self.request.user):
+            instance.delete()
+
+
 @method_decorator(
     name="list",
     decorator=swagger_auto_schema(
@@ -156,7 +168,7 @@ AUDIT_FILTER_PARAMETERS = [
             properties={
                 "username": openapi.Schema(type=openapi.TYPE_STRING, example="orlando"),
                 "email": openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, example="orlando@example.com"),
-                "password": openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD, example="Admin@123"),
+                "password": openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
             },
             required=["username", "email", "password"],
         ),
@@ -170,13 +182,22 @@ AUDIT_FILTER_PARAMETERS = [
     ),
 )
 class UsuarioViewSet(viewsets.ModelViewSet):
-    queryset = Usuario.objects.all()
+    queryset = Usuario.objects.all().order_by("username")
     serializer_class = UsuarioSerializer
-    permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["username", "email"]
     ordering_fields = ["username", "email", "id"]
     ordering = ["username"]
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated(), IsOwnerOrStaff()]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return self.queryset
+        return self.queryset.filter(pk=self.request.user.pk)
 
 
 @method_decorator(
@@ -243,8 +264,9 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     ),
 )
 class CursoViewSet(viewsets.ModelViewSet):
-    queryset = Curso.objects.all()
+    queryset = Curso.objects.select_related("criado_por").all()
     serializer_class = CursoSerializer
+    permission_classes = [permissions.IsAuthenticated, IsCourseOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["nome", "descricao"]
     ordering_fields = ["preco", "criacao", "total_vendas", "media_avaliacoes"]
@@ -252,9 +274,6 @@ class CursoViewSet(viewsets.ModelViewSet):
     ordering = ["nome"]
 
     def perform_create(self, serializer):
-        if not self.request.user.is_authenticated:
-            raise PermissionError("Login obrigatório")
-
         serializer.save(criado_por=self.request.user)
 
 
@@ -321,9 +340,10 @@ class CursoViewSet(viewsets.ModelViewSet):
         },
     ),
 )
-class AvaliacaoViewSet(viewsets.ModelViewSet):
-    queryset = Avaliacao.objects.all()
+class AvaliacaoViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
+    queryset = Avaliacao.objects.select_related("usuario", "curso").all()
     serializer_class = AvaliacaoSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["comentario", "curso__nome", "usuario__username"]
     ordering_fields = ["nota", "criacao"]
@@ -331,10 +351,8 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
     ordering = ["-criacao"]
 
     def perform_create(self, serializer):
-        if not self.request.user.is_authenticated:
-            raise PermissionError("Login obrigatório")
-
-        serializer.save(usuario=self.request.user)
+        with audit_user(self.request.user):
+            serializer.save(usuario=self.request.user)
 
 
 @method_decorator(
@@ -398,20 +416,24 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
         },
     ),
 )
-class CompraViewSet(viewsets.ModelViewSet):
-    queryset = Compra.objects.all()
+class CompraViewSet(AuditedViewSetMixin, viewsets.ModelViewSet):
+    queryset = Compra.objects.select_related("usuario", "curso").all()
     serializer_class = CompraSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["curso__nome", "usuario__username", "status"]
     ordering_fields = ["preco", "criacao"]
     filterset_fields = {"preco": ["gte", "lte"], "status": ["exact"], "curso": ["exact"]}
     ordering = ["-criacao"]
 
-    def perform_create(self, serializer):
-        if not self.request.user.is_authenticated:
-            raise PermissionError("Login obrigatório")
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return self.queryset
+        return self.queryset.filter(usuario=self.request.user)
 
-        serializer.save(usuario=self.request.user)
+    def perform_create(self, serializer):
+        with audit_user(self.request.user):
+            serializer.save(usuario=self.request.user)
 
 
 @method_decorator(
@@ -449,8 +471,9 @@ class CompraViewSet(viewsets.ModelViewSet):
     ),
 )
 class AuditoriaViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Auditoria.objects.all()
+    queryset = Auditoria.objects.select_related("usuario").all()
     serializer_class = AuditoriaSerializer
+    permission_classes = [permissions.IsAdminUser]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["usuario__username", "modelo", "acao"]
     ordering_fields = ["criado_em"]

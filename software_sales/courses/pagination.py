@@ -14,7 +14,7 @@ class BasePagination:
         raise NotImplementedError("Você precisa implementar get_pagination_meta()")
 
 # Paginação padrão
-class CustomPagination(PageNumberPagination, BasePagination):
+class CustomPagination(BasePagination, PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'   # ?page_size=20
     max_page_size = 100
@@ -31,7 +31,7 @@ class CustomPagination(PageNumberPagination, BasePagination):
         }
 
 # Endpoints para listas grandes
-class LargeResultsPagination(PageNumberPagination, BasePagination):
+class LargeResultsPagination(BasePagination, PageNumberPagination):
     page_size = 50
     page_size_query_param = 'page_size'
     max_page_size = 200
@@ -47,7 +47,7 @@ class LargeResultsPagination(PageNumberPagination, BasePagination):
         }
 
 # Ideal para o front
-class CustomLimitOffsetPagination(LimitOffsetPagination, BasePagination):
+class CustomLimitOffsetPagination(BasePagination, LimitOffsetPagination):
     default_limit = 10
     max_limit = 100
 
@@ -62,7 +62,7 @@ class CustomLimitOffsetPagination(LimitOffsetPagination, BasePagination):
 
 
 # Performance alta em grandes volumes
-class CustomCursorPagination(CursorPagination, BasePagination):
+class CustomCursorPagination(BasePagination, CursorPagination):
     page_size = 10
     ordering = '-criacao'  # precisa de index no campo!
 

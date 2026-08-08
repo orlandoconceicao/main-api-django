@@ -26,7 +26,7 @@ def api_home(request):
             "api": "Django REST Framework",
             "auth": "JWT via Simple JWT",
             "database": "PostgreSQL / SQLite",
-            "deployment": "Docker + Celery + Redis",
+            "deployment": "Docker + PostgreSQL",
             "design": "Services, selectors, audit logging",
         },
 
@@ -64,7 +64,7 @@ class TokenObtainPairViewWithDocs(TokenObtainPairView):
             type=openapi.TYPE_OBJECT,
             properties={
                 "username": openapi.Schema(type=openapi.TYPE_STRING, example="orlando"),
-                "password": openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD, example="Admin@123"),
+                "password": openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
             },
             required=["username", "password"],
         ),

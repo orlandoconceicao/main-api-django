@@ -6,7 +6,7 @@ from .models import Usuario, Curso, Avaliacao, Compra, Auditoria
 
 # USUÁRIO
 class UsuarioSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = Usuario
@@ -15,6 +15,14 @@ class UsuarioSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data["email"] = validated_data["email"].lower()
         return Usuario.objects.create_user(**validated_data)
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        instance = super().update(instance, validated_data)
+        if password:
+            instance.set_password(password)
+            instance.save(update_fields=["password"])
+        return instance
 
 
 # CURSO
@@ -74,12 +82,6 @@ class AvaliacaoSerializer(serializers.ModelSerializer):
 
         return data
 
-    def create(self, validated_data):
-        request = self.context["request"]
-        validated_data["usuario"] = request.user
-        return Avaliacao.objects.create(**validated_data)
-
-
 # COMPRA (CORRIGIDO)
 class CompraSerializer(serializers.ModelSerializer):
     class Meta:
@@ -97,15 +99,6 @@ class CompraSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Curso obrigatório")
 
         return data
-
-    def create(self, validated_data):
-        request = self.context["request"]
-
-        return Compra.objects.create(
-            usuario=request.user,
-            curso=validated_data["curso"]
-        )
-
 
 # AUDITORIA
 class AuditoriaSerializer(serializers.ModelSerializer):

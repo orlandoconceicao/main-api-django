@@ -1,22 +1,13 @@
-FROM python:3.10
+FROM python:3.12-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8000
 WORKDIR /app
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
-
-RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.txt .
-
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . .
-
 RUN chmod +x /app/docker/entrypoint.sh
-
 EXPOSE 8000
-
-CMD ["sh", "/app/docker/entrypoint.sh"]
+ENTRYPOINT ["/app/docker/entrypoint.sh"]
+CMD ["gunicorn", "software_sales.core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

@@ -60,7 +60,9 @@ class Curso(Base):
 
     def atualizar_metricas(self):
         """Atualiza vendas e média com segurança."""
-        self.total_vendas = self.compras.count()
+        self.total_vendas = self.compras.filter(
+            status=CompraStatus.COMPLETED
+        ).count()
 
         media = self.avaliacoes.aggregate(avg=Avg("nota")).get("avg")
 
@@ -99,17 +101,6 @@ class Avaliacao(Base):
 
     class Meta:
         unique_together = ("usuario", "curso")
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.curso_id:
-            self.curso.atualizar_metricas()
-
-    def delete(self, *args, **kwargs):
-        curso = self.curso
-        super().delete(*args, **kwargs)
-        if curso:
-            curso.atualizar_metricas()
 
     def __str__(self):
         return f"{self.usuario} → {self.curso}"
@@ -157,15 +148,6 @@ class Compra(Base):
         )
 
         super().save(*args, **kwargs)
-
-        if self.curso_id:
-            self.curso.atualizar_metricas()
-
-    def delete(self, *args, **kwargs):
-        curso = self.curso
-        super().delete(*args, **kwargs)
-        if curso:
-            curso.atualizar_metricas()
 
     def __str__(self):
         return f"{self.usuario} → {self.curso}"

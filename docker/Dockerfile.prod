@@ -1,29 +1,11 @@
-FROM python:3.10
-
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Dependências do sistema
-RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
-
-# Dependências Python
+RUN addgroup --system django && adduser --system --ingroup django django
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-
-# Copia projeto
-COPY . .
-
-# Permissão do entrypoint
+RUN pip install --no-cache-dir -r requirements.txt
+COPY --chown=django:django . .
 RUN chmod +x /app/docker/entrypoint.sh
-
-# Pasta principal do Django
-WORKDIR /app/software_sales
-
-# Entrypoint
+USER django
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
-
-# Produção
-CMD ["gunicorn", "software_sales.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["gunicorn", "software_sales.core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

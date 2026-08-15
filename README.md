@@ -72,3 +72,11 @@ DEBUG=False python manage.py check --deploy
 ```
 
 Não há frontend neste repositório. Os endpoints podem ser consumidos por qualquer cliente HTTP usando `Authorization: Bearer <access_token>`.
+
+## Autor
+
+**Orlando Conceição Vilhalba de Almeida**
+
+Desenvolvedor Backend em formação, com foco em Python, Django, Django REST Framework, APIs REST, PostgreSQL e Docker.
+
+GitHub: [orlandoconceicao](https://github.com/orlandoconceicao)
